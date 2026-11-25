@@ -7,7 +7,7 @@
   const back = $('pfBack');
   if (back) back.addEventListener('click', () => {
     const card = $('cmCard');
-    if (card && !card.hidden) CareMatePlan.hide(); else window.location.href = 'index.html?home';
+    if (card && !card.hidden) CareMatePlan.hide(); else window.location.href = 'index.html';
   });
 
   /* Men do not see PCOD, PCOS or pregnancy */
@@ -204,7 +204,7 @@
       if (a === 'edit') { if (!$('cmCard').hidden) CareMatePlan.hide(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
       if (a === 'sec') $('pfSecure').click();
       if (a === 'wa') window.open('https://wa.me/919096066204?text=' + encodeURIComponent('Hello, I have a question from CareMate.'), '_blank', 'noopener');
-      if (a === 'out') { try { localStorage.removeItem('careMateUser'); } catch (e) {} window.location.href = 'index.html?home'; }
+      if (a === 'out') { try { localStorage.removeItem('careMateUser'); } catch (e) {} window.location.href = 'index.html'; }
       if (a === 'wipe') $('secWipe').click(); }
   });
   if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => window.cmApply());
@@ -266,7 +266,7 @@
     if (!confirm('Delete your profile, plan, progress, reminders and PIN? This also removes them from your account.')) return;
     if (window.CareMateAPI) CareMateAPI.wipeRemote();
     try { Object.keys(localStorage).filter(k => k.indexOf('careMate') === 0).forEach(k => localStorage.removeItem(k)); } catch (e) {}
-    window.location.href = 'index.html?home';
+    window.location.href = 'index.html';
   });
 })();
 

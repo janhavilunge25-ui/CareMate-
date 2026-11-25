@@ -2077,7 +2077,7 @@ const CareMatePlan = (function () {
       const b = e.target.closest('[data-act]'); if (!b) return;
       const act = b.dataset.act, id = b.dataset.id;
       if (act === 'view') { view = b.dataset.v; draw('[data-act="view"][data-v="' + view + '"]'); return; }
-      if (act === 'goto') { showTab(id); $('cmCard').querySelector('.cm-layout').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      if (act === 'goto') { showTab(id); setTimeout(() => { const t = $('cmCard').querySelector('.cm-main'), h = document.querySelector('header'); window.scrollTo({ top: Math.max(0, t.getBoundingClientRect().top + window.pageYOffset - ((h ? h.offsetHeight : 70) + 10)), behavior: 'smooth' }); }, 30); return; }
       const def = defs.find(d => d.id === id); if (!def) return;
       const log = readLog(), k = dkey(new Date()), day = log[k] || (log[k] = {});
       const before = dayPct(day, defs);
@@ -2163,7 +2163,12 @@ const CareMatePlan = (function () {
       </div>
       <p class="cm-legal">CareMate gives general wellness guidance. It does not diagnose conditions or replace a doctor or dietitian.</p>`;
 
-    const toTop = () => $('cmCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    /* After choosing an area, land right on its content (just under the header), so nothing needs scrolling back down. */
+    const toTop = () => {
+      const target = $('cmCard').querySelector('.cm-main') || $('cmCard');
+      const hdr = document.querySelector('header'), off = (hdr ? hdr.offsetHeight : 70) + 10;
+      window.scrollTo({ top: Math.max(0, target.getBoundingClientRect().top + window.pageYOffset - off), behavior: 'smooth' });
+    };
     document.querySelectorAll('.cm-tab').forEach(b => b.addEventListener('click', () => {
       showTab(b.dataset.id);
       if (window.innerWidth <= 900) toTop();            // phones: bring the opened area into view

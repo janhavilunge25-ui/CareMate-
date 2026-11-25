@@ -93,11 +93,14 @@ button, [role="button"], a { touch-action: manipulation; }
   .cm-nav, .cm-main, .cm-sec { min-width: 0; max-width: 100%; }
   .cm-card { grid-template-columns: minmax(0, 1fr) !important; }
 
-  /* section tabs (Diet / Yoga / Meditation / Ask) become one swipeable row */
-  .cm-card .cm-tabs { flex-wrap: nowrap !important; overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity;
-    margin: 0 -14px; padding: 4px 14px 8px; scrollbar-width: none; }
-  .cm-card .cm-tabs::-webkit-scrollbar { display: none; }
-  .cm-card .cm-tab { flex: none !important; width: auto !important; scroll-snap-align: start; white-space: nowrap; }
+  /* section buttons (Diet / Yoga / Meditation / Ask): all visible at once in a 2-column grid, nothing hidden off-screen */
+  .cm-card .cm-tabs { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; overflow: visible !important; margin: 0; padding: 2px 0 6px; }
+  .cm-card .cm-tab { width: auto !important; min-width: 0; flex: none !important; padding: 10px 8px !important; gap: 8px; align-items: center; white-space: normal; text-align: left; border-radius: 14px !important; }
+  .cm-card .cm-tab:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .cm-card .cm-tab .cm-tico { flex: none; width: 30px !important; height: 30px !important; }
+  .cm-card .cm-tab .cm-tlabel { font-size: 12.5px !important; line-height: 1.25; min-width: 0; overflow-wrap: normal; word-break: normal; }
+  .cm-card .cm-tab .cm-tchev { display: none !important; }
+  .cm-nav { position: static !important; }
 
   .cm-days { scroll-snap-type: x proximity; }
   .cm-pager { gap: 8px; }
@@ -112,14 +115,25 @@ button, [role="button"], a { touch-action: manipulation; }
 
 /* chat helper: smaller window on phones, and it never covers the bottom navigation */
 @media (max-width: 700px) {
-  .cb-box { width: min(310px, calc(100vw - 24px)) !important; max-height: min(430px, 58vh) !important; max-height: min(430px, 58dvh) !important;
-    right: 12px !important; left: auto !important; bottom: 84px !important; border-radius: 16px !important; font-size: 13px; }
-  body.hp-profile .cb-box { bottom: 140px !important; }
-  .cb-head { padding: 8px 10px !important; gap: 8px !important; }
-  .cb-av { width: 30px !important; height: 30px !important; font-size: 13px !important; }
-  .cb-box .cb-m { font-size: 13px !important; line-height: 1.4; }
-  .cb-box button { font-size: 12px !important; min-height: 32px !important; padding-top: 5px; padding-bottom: 5px; }
-  .cb-box input, .cb-box textarea { font-size: 15px !important; min-height: 38px !important; }
+  .cb-box { width: min(320px, calc(100vw - 24px)) !important; height: min(470px, 68vh) !important; height: min(470px, 68dvh) !important; max-height: none !important;
+    right: 12px !important; left: auto !important; bottom: 80px !important; border-radius: 16px !important; font-size: 13px; }
+  body.hp-profile .cb-box { bottom: 138px !important; height: min(450px, 62vh) !important; height: min(450px, 62dvh) !important; }
+  .cb-head { padding: 7px 10px !important; gap: 8px !important; flex: none; }
+  .cb-head small { font-size: 10.5px !important; }
+  .cb-av { width: 28px !important; height: 28px !important; font-size: 12px !important; animation: none !important; }
+  .cb-head button { width: 30px !important; height: 30px !important; min-height: 0 !important; }
+  .cb-tabs { flex: none; padding: 6px 8px !important; }
+  .cb-tabs button { padding: 4px 10px !important; min-height: 28px !important; font-size: 11.5px !important; }
+  .cb-log { flex: 1 1 auto !important; min-height: 0 !important; padding: 8px !important; gap: 6px !important; }
+  body.hp-profile .cb-log { min-height: 0 !important; }
+  .cb-box .cb-m { font-size: 12.5px !important; line-height: 1.38; padding: 8px 10px; }
+  .cb-chips { flex: none; flex-wrap: nowrap !important; overflow-x: auto !important; overflow-y: hidden; max-height: none !important; padding: 6px 8px !important; scrollbar-width: none; }
+  .cb-chips::-webkit-scrollbar { display: none; }
+  .cb-chips button { flex: none; white-space: nowrap; font-size: 11.5px !important; min-height: 28px !important; padding: 4px 10px !important; }
+  .cb-form { flex: none; padding: 6px 8px !important; }
+  .cb-box .cb-form input { font-size: 14px !important; min-height: 36px !important; padding: 6px 12px !important; }
+  .cb-send { width: 36px !important; height: 36px !important; min-height: 0 !important; flex: none; }
+  .cb-note { flex: none; font-size: 9.5px !important; line-height: 1.3; padding: 0 8px 6px !important; }
   .cb-fab { width: 50px !important; height: 50px !important; font-size: 19px !important; right: 14px !important; bottom: 16px !important; }
   body.hp-profile .cb-fab { bottom: 84px !important; }
 
