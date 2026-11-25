@@ -7,7 +7,7 @@
   const back = $('pfBack');
   if (back) back.addEventListener('click', () => {
     const card = $('cmCard');
-    if (card && !card.hidden) CareMatePlan.hide(); else window.location.href = 'index.html';
+    if (card && !card.hidden) CareMatePlan.hide(); else window.location.href = 'index.html?home';
   });
 
   /* Men do not see PCOD, PCOS or pregnancy */
@@ -204,7 +204,7 @@
       if (a === 'edit') { if (!$('cmCard').hidden) CareMatePlan.hide(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
       if (a === 'sec') $('pfSecure').click();
       if (a === 'wa') window.open('https://wa.me/919096066204?text=' + encodeURIComponent('Hello, I have a question from CareMate.'), '_blank', 'noopener');
-      if (a === 'out') { try { localStorage.removeItem('careMateUser'); } catch (e) {} window.location.href = 'index.html'; }
+      if (a === 'out') { try { localStorage.removeItem('careMateUser'); } catch (e) {} window.location.href = 'index.html?home'; }
       if (a === 'wipe') $('secWipe').click(); }
   });
   if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => window.cmApply());
@@ -250,7 +250,7 @@
   /* Privacy & security panel */
   const panel = document.createElement('div');
   panel.className = 'sec-panel'; panel.hidden = true;
-  panel.innerHTML = '<div class="sec-card" role="dialog" aria-modal="true" aria-label="Privacy and security"><h3><i class="fa-solid fa-shield-halved"></i> Privacy &amp; security</h3><p class=\"pv-lead\">Your profile is securely synced to your account. You can delete your data anytime.</p><div class=\"pv\"><div><b><i class=\"fa-solid fa-mobile-screen\"></i> On this device</b><span>A fast local copy of your profile, plan, goals and reminders. Your profile picture, PIN lock and settings stay here only.</span></div><div><b><i class=\"fa-solid fa-cloud\"></i> In your account</b><span>When you are logged in, your profile, plan, daily goals and reminders are saved on the CareMate server so they follow you to other devices.</span></div><div><b><i class=\"fa-solid fa-lock\"></i> How it is protected</b><span>Passwords are stored scrambled (hashed), never as plain text. Logins use a private session code that expires, and repeated wrong passwords are blocked. Use the https:// address of the site so data is encrypted in transit.</span></div><div><b><i class=\"fa-solid fa-comments\"></i> Chat helper</b><span>When you are logged in, questions you type in the helper are sent to our AI service to write an answer. Only your question and a few basics (health focus, food preference, age group) are sent, never your name or email.</span></div><div><b><i class=\"fa-solid fa-trash-can\"></i> You are in control</b><span>Delete all my data removes everything from this device and from your account. Logging out clears the local copy from this device.</span></div></div><p class=\"pv-small\">Add a PIN so nobody else can open your plan on this device.</p><button type="button" id="secSet"></button><button type="button" class="danger" id="secWipe">Delete all my data</button><button type="button" class="ghost" id="secClose">Close</button></div>';
+  panel.innerHTML = '<div class="sec-card" role="dialog" aria-modal="true" aria-label="Privacy and security"><h3><i class="fa-solid fa-shield-halved"></i> Privacy &amp; security</h3><p class=\"pv-lead\">Your profile is securely synced to your account. You can delete your data anytime.</p><div class=\"pv\"><div><b><i class=\"fa-solid fa-mobile-screen\"></i> On this device</b><span>A fast local copy of your profile, plan, goals and reminders. Your profile picture, PIN lock and settings stay here only.</span></div><div><b><i class=\"fa-solid fa-cloud\"></i> In your account</b><span>When you are logged in, your profile, plan, daily goals and reminders are saved on the CareMate server so they follow you to other devices. Only you and the CareMate owner (admin) can see them. No other user can.</span></div><div><b><i class=\"fa-solid fa-lock\"></i> How it is protected</b><span>Passwords are stored scrambled (hashed), never as plain text. Logins use a private session code that expires, and repeated wrong passwords are blocked. Use the https:// address of the site so data is encrypted in transit.</span></div><div><b><i class=\"fa-solid fa-comments\"></i> Chat helper</b><span>When you are logged in, questions you type in the helper are sent to our AI service to write an answer. Only your question and a few basics (health focus, food preference, age group) are sent, never your name or email.</span></div><div><b><i class=\"fa-solid fa-trash-can\"></i> You are in control</b><span>Delete all my data removes everything from this device and from your account. Logging out clears the local copy from this device.</span></div></div><p class=\"pv-small\">Add a PIN so nobody else can open your plan on this device.</p><button type="button" id="secSet"></button><button type="button" class="danger" id="secWipe">Delete all my data</button><button type="button" class="ghost" id="secClose">Close</button></div>';
   document.body.appendChild(panel);
   const label = () => { $('secSet').textContent = ls.get(K) ? 'Remove PIN lock' : 'Set a 4-digit PIN lock'; };
   const open = $('pfSecure');
@@ -266,7 +266,7 @@
     if (!confirm('Delete your profile, plan, progress, reminders and PIN? This also removes them from your account.')) return;
     if (window.CareMateAPI) CareMateAPI.wipeRemote();
     try { Object.keys(localStorage).filter(k => k.indexOf('careMate') === 0).forEach(k => localStorage.removeItem(k)); } catch (e) {}
-    window.location.href = 'index.html';
+    window.location.href = 'index.html?home';
   });
 })();
 

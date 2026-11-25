@@ -1,6 +1,7 @@
 'use strict';
 /* Smoke test: node --no-warnings test.js  (uses an in-memory database) */
 process.env.DB_PATH = ':memory:';
+process.env.ADMIN_EMAIL = 'owner@example.com';
 const http = require('node:http');
 const fakeAI = http.createServer((req, res) => { let b = ''; req.on('data', c => b += c); req.on('end', () => { const j = JSON.parse(b); res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ content: [{ type: 'text', text: JSON.stringify({ reply: 'Try dal and curd. (' + j.messages.length + ' msgs; ' + (j.system.includes('Never recommend') ? 'rules sent' : 'NO RULES') + ')', follow_ups: ['Do you eat eggs?'] }) }] })); }); });
 const assert = require('node:assert');
@@ -46,6 +47,26 @@ server.listen(0, async () => {
     process.env.ANTHROPIC_API_KEY = 'test-key';
     const em = await ask('I have chest pain and cannot breathe'); assert.equal(em.body.urgent, true);
     const ok = await ask('what should I eat'); assert.equal(ok.status, 200); assert.match(ok.body.reply, /rules sent/); assert.deepEqual(ok.body.followUps, ['Do you eat eggs?']);
+    // privacy: a normal user can never read the owner view; the owner can, and never sees passwords or tokens
+    assert.equal((await call('GET', '/api/admin/users')).status, 401);
+    assert.equal((await call('GET', '/api/admin/users', null, t)).status, 404);
+    assert.equal((await call('GET', '/api/admin/users/1', null, t)).status, 404);
+    assert.equal(login.body.user.admin, false);
+    const own = await call('POST', '/api/register', { name: 'Owner', email: 'owner@example.com', password: 'secret2' });
+    assert.equal(own.body.user.admin, true);
+    const list = await call('GET', '/api/admin/users', null, own.body.token);
+    assert.equal(list.status, 200); assert.equal(list.body.users.length, 2);
+    assert.ok(!JSON.stringify(list.body).match(/password|salt|token/i));
+    const det = await call('GET', '/api/admin/users/' + reg.body.user.id, null, own.body.token);
+    assert.equal(det.status, 200); assert.equal(det.body.user.email, 'asha@example.com'); assert.equal(det.body.profile.fullName, 'Asha Patil');
+    assert.equal((await call('GET', '/api/admin/users/999', null, own.body.token)).status, 404);
+    // a user's own sync only ever holds their own data
+    assert.equal((await call('GET', '/api/sync', null, own.body.token)).body.profile, null);
+    // static files are compressed and cached
+    const gz = await fetch(base + '/script.js', { headers: { 'Accept-Encoding': 'gzip' } });
+    assert.equal(gz.headers.get('content-encoding'), 'gzip');
+    assert.equal((await fetch(base + '/script.js', { headers: { 'If-None-Match': gz.headers.get('etag') } })).status, 304);
+    assert.equal((await fetch(base + '/backend/db.js')).status, 404);
     await call('DELETE', '/api/data', null, t);
     assert.equal((await call('GET', '/api/sync', null, t)).body.profile, null);
     await call('POST', '/api/logout', null, t);

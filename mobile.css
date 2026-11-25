@@ -1,0 +1,141 @@
+/* =====================================================================
+   mobile.css: loaded LAST on every page, so it only adjusts what is needed.
+   Laptops / large screens (above 900px) keep the original design.
+   Phones and small tablets get a cleaner, lighter, easier-to-tap layout.
+   ===================================================================== */
+
+/* ---------- all screens: safe defaults ---------- */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+img, svg, video, canvas { max-width: 100%; }
+img { height: auto; }
+.logo-image { height: auto; }
+body { overflow-x: hidden; overflow-wrap: break-word; }
+button, [role="button"], a { touch-action: manipulation; }
+
+/* very large monitors: keep content centred and readable instead of stretched */
+@media (min-width: 1700px) {
+  html { font-size: 17px; }
+}
+
+/* ---------- tablets and phones ---------- */
+@media (max-width: 900px) {
+  /* faster scrolling: a fixed background image and heavy blur repaint on every scroll frame on phones */
+  body { background-attachment: scroll !important; min-height: 100vh; min-height: 100dvh; }
+  .pf-bg .blob { filter: none; opacity: .22; animation: none; }
+  .pf-bg .f { animation: none; }
+  #splash-screen { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(255,255,255,.96); }
+
+  /* room for the phone's notch / home bar */
+  header { padding-top: env(safe-area-inset-top, 0px); }
+  .footer, footer { padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
+
+  /* forms: 16px stops iPhones zooming in on every field, and fields are easy to tap */
+  input, select, textarea { font-size: 16px !important; min-height: 46px; }
+  textarea { min-height: 96px; }
+  button, .hp-btn, .cm-pg, .cm-tab, select { min-height: 44px; }
+  input[type="checkbox"], input[type="radio"] { min-height: 0; }
+
+  /* the page never scrolls sideways */
+  main, section, .hp-wrap, .form-card, .cm-card { max-width: 100%; }
+  table { display: block; overflow-x: auto; max-width: 100%; }
+}
+
+/* ---------- home page navigation on phones ---------- */
+@media (max-width: 858px) {
+  header .navigation { padding-left: 12px; padding-right: 12px; }
+  .check_btn { padding: 10px; margin-left: auto; font-size: 24px; }
+  header .navigation nav ul {
+    left: -120%; right: auto; width: calc(100% - 24px); max-width: 420px; height: auto;
+    max-height: calc(100vh - 120px); max-height: calc(100dvh - 120px); overflow-y: auto;
+    top: calc(env(safe-area-inset-top, 0px) + 108px); gap: 2px; padding: 10px 14px 14px; border-radius: 14px;
+  }
+  #check:checked ~ nav ul { left: 12px; }
+  header .navigation nav ul li { width: 100%; line-height: 1.2; padding-left: 0; margin-left: 0; }
+  header .navigation nav ul li a { display: block; padding: 14px 6px; font-size: 18px; }
+  header .navigation nav ul li .login-btn { width: 100%; margin: 8px 0 0; height: 48px; color: #fff; border-color: #fff; }
+  header .navigation nav ul li .pf-theme { margin: 4px 0; }
+}
+
+/* ---------- home page content ---------- */
+@media (max-width: 700px) {
+  .hp-wrap { padding-left: 18px; padding-right: 18px; }
+  .hp-hero h1 { font-size: clamp(1.9rem, 8.4vw, 2.5rem); line-height: 1.12; }
+  .hp-lead { font-size: 1rem; }
+  .hp-cta { flex-direction: column; align-items: stretch; gap: 10px; }
+  .hp-cta .hp-btn { width: 100%; justify-content: center; text-align: center; }
+  .hp-trust { display: grid; grid-template-columns: 1fr; gap: 8px; text-align: left; justify-items: start; padding-left: 4px; }
+  .hp-section { padding-top: 44px; padding-bottom: 44px; }
+  .hp-head h2 { font-size: clamp(1.45rem, 6.6vw, 1.9rem); }
+  /* the dashboard preview is big on a laptop; on a phone keep only what is useful */
+  .hp-dp-side { display: none; }
+  .hp-dp-cols { grid-template-columns: 1fr; }
+  .hp-dp-week { display: none; }
+  .hp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .hp-credit { padding: 20px 16px; }
+  .hp-credit-act { flex-direction: column; align-items: stretch; }
+  .hp-credit-act .hp-btn { width: 100%; justify-content: center; }
+  .hp-safe { grid-template-columns: 1fr; }
+  .hp-team { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .hp-modal-card { max-height: 92vh; max-height: 92dvh; overflow-y: auto; }
+  .cover_box { padding: 12px; align-items: flex-start; overflow-y: auto; }
+  .form-box { margin: 24px auto; }
+}
+
+/* ---------- plan / profile page on phones ---------- */
+@media (max-width: 700px) {
+  .form-card { margin-left: 12px !important; margin-right: 12px !important; padding: 18px 14px !important; border-radius: 18px; }
+  .form-grid { grid-template-columns: 1fr !important; }
+  .pf-hero { flex-direction: column; text-align: left; }
+  .pf-right .step-indicator { display: none; }
+  .pf-trust { display: grid; gap: 6px; }
+
+  /* top banner: details sit in a neat 2-column grid instead of a sideways-scrolling row */
+  .cm-banner { padding: 20px 16px !important; }
+  .cm-bn-chips { flex: 1 1 100% !important; width: 100%; max-width: 100% !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .cm-bn-chips .cm-chip { min-height: 0; padding: 8px 12px; }
+  .cm-bn-chips .cm-chip b { font-size: .9em; }
+
+  /* grid children may shrink, otherwise a wide swipe row would stretch the whole page sideways */
+  .cm-nav, .cm-main, .cm-sec { min-width: 0; max-width: 100%; }
+  .cm-card { grid-template-columns: minmax(0, 1fr) !important; }
+
+  /* section tabs (Diet / Yoga / Meditation / Ask) become one swipeable row */
+  .cm-card .cm-tabs { flex-wrap: nowrap !important; overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity;
+    margin: 0 -14px; padding: 4px 14px 8px; scrollbar-width: none; }
+  .cm-card .cm-tabs::-webkit-scrollbar { display: none; }
+  .cm-card .cm-tab { flex: none !important; width: auto !important; scroll-snap-align: start; white-space: nowrap; }
+
+  .cm-days { scroll-snap-type: x proximity; }
+  .cm-pager { gap: 8px; }
+  .cm-pg { flex: 1; justify-content: center; }
+  .cm-med, .cm-meal { max-width: 100%; }
+  .cm-toast { left: 12px; right: 12px; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); transform: none; max-width: none; }
+
+  /* bottom navigation bar: thumb-friendly and clear of the home bar */
+  .cm-bn-text, .bn, .bn-bar, nav.bn { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .sec-card, .cb-panel { max-height: 92vh; max-height: 92dvh; }
+}
+
+/* chat helper button must not cover the bottom navigation */
+@media (max-width: 700px) {
+  #cbLauncher, .cb-fab, .cb-launch { bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important; right: 14px !important; }
+  .cb-panel, .cb-win { left: 8px !important; right: 8px !important; width: auto !important; max-width: none !important;
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important; max-height: 82vh; max-height: 82dvh; }
+}
+
+/* small phones */
+@media (max-width: 380px) {
+  .hp-team { grid-template-columns: 1fr; }
+  .hp-stats { grid-template-columns: 1fr 1fr; }
+  .cm-bn-chips { grid-template-columns: 1fr !important; }
+}
+
+/* landscape phones: do not let the splash or modals overflow */
+@media (max-height: 480px) and (orientation: landscape) {
+  .hp-modal-card, .sec-card, .cover_box { max-height: 96vh; overflow-y: auto; }
+}
+
+/* people who asked their device for less motion */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}

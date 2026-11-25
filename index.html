@@ -2,21 +2,44 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>CareMate | Personalised diet, yoga and wellness plans</title>
     <meta name="description" content="CareMate builds a simple diet, yoga and meditation plan around your health condition, food preference and daily routine. General wellness guidance, never a replacement for your doctor.">
     <meta name="theme-color" content="#031716">
     <meta property="og:type" content="website">
     <meta property="og:title" content="CareMate | Personalised diet, yoga and wellness plans">
     <meta property="og:description" content="Tell us about you and get a diet, yoga and meditation routine shaped around your condition.">
-    <link rel="icon" href="logo-.png">
+    <link rel="icon" href="logo-small.png">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="extras.css">
     <link rel="stylesheet" href="home-dash.css">
     <link rel="stylesheet" href="progress.css">
+    <link rel="stylesheet" href="mobile.css">
+<script>
+/* Signed in? Reopening the app goes straight to the health profile / plan, not the home page.
+   Tapping the logo or "Home" from inside the app sets a one-time flag so the home page still opens. */
+(function () {
+  try {
+    var stay = sessionStorage.getItem('cmStayHome') || /[?&]home\b/.test(location.search);
+    if (stay) { sessionStorage.removeItem('cmStayHome'); if (history.replaceState && /[?&]home\b/.test(location.search)) history.replaceState(null, '', location.pathname + location.hash); return; }
+    if (location.hash && location.hash !== '#' && location.hash !== '#home') return;   // a link to a section: leave it alone
+    var u = localStorage.getItem('careMateUser'), t = localStorage.getItem('careMateToken');
+    if (!u || !t) return;
+    var p = JSON.parse(localStorage.getItem('careMateProfile') || 'null');
+    location.replace(p && p.goals && p.goals.length ? 'profile.html#plan' : 'profile.html');
+  } catch (e) {}
+})();
+</script>
 <script src="theme.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/poppins">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+    </noscript>
 </head>
 <body class="hp-home">
 
@@ -24,7 +47,7 @@
 
     <!-- ===== Splash screen: shows the CareMate logo on load, then hands off to the site ===== -->
     <div id="splash-screen">
-        <img src="logo-.png" alt="CareMate" class="splash-logo">
+        <img src="logo-small.png" alt="CareMate" class="splash-logo" width="220" height="147" fetchpriority="high">
         <div class="splash-loader"></div>
     </div>
 
@@ -34,7 +57,7 @@
             <label for="check" class="check_btn">
                 <i class="fas fa-bars"></i>
             </label>
-            <img src="logo-.png" alt="CareMate Logo" class="logo-image">
+            <img src="logo-small.png" alt="CareMate Logo" class="logo-image" width="120" height="80">
 
 
             <nav>
@@ -273,10 +296,9 @@
                 <div class="hp-credit-main">
                     <small class="hp-credit-eyebrow"><i class="fa-solid fa-shield-heart"></i> Meet your dietitian</small>
                     <h3>Dhanashree Pundkar</h3>
-                    <p class="hp-credit-role">Clinical Dietitian &amp; Nutritionist · Aadya Diet Consultancy</p>
+                    <p class="hp-credit-role">Dietitian &amp; Nutritionist · Aadya Diet Consultancy</p>
                     <ul class="hp-credit-list">
                         <li><i class="fa-solid fa-graduation-cap"></i><span><b>Qualification</b>M.Sc. (Food &amp; Nutrition), NDEP</span></li>
-                        <li><i class="fa-solid fa-hospital"></i><span><b>Currently</b>Dietitian, Sant Tukaram Cancer Hospital, Akola</span></li>
                         <li><i class="fa-solid fa-clock-rotate-left"></i><span><b>Previously</b>Dietitian, HCG Manavata Cancer Hospital, Nashik</span></li>
                         <li><i class="fa-solid fa-address-card"></i><span><b>Credentials</b>Visiting card available to view</span></li>
                     </ul>
@@ -288,7 +310,7 @@
             </div>
             <ul class="hp-safe hp-reveal">
                 <li><i class="fa-solid fa-user-doctor"></i><b>Dietitian-guided</b><span>Food guidance is prepared with a qualified dietitian.</span></li>
-                <li><i class="fa-solid fa-lock"></i><b>Private by design</b><span>Your details stay on your own device.</span></li>
+                <li><i class="fa-solid fa-lock"></i><b>Private by design</b><span>Only you and the CareMate admin can see your details.</span></li>
                 <li><i class="fa-solid fa-hand-holding-heart"></i><b>Safe guidance</b><span>General wellness advice. It never replaces your doctor.</span></li>
             </ul>
 
@@ -512,13 +534,13 @@
     </footer>
 
     <!-- EmailJS: sends the Contact form messages -->
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <script src="api.js"></script>
-    <script src="progress.js"></script>
-    <script src="script.js"></script>
-    <script src="home.js"></script>
-    <script src="home-dash.js"></script>
-    <script src="chatbot.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" defer></script>
+    <script src="api.js" defer></script>
+    <script src="progress.js" defer></script>
+    <script src="script.js" defer></script>
+    <script src="home.js" defer></script>
+    <script src="home-dash.js" defer></script>
+    <script src="chatbot.js" defer></script>
     <script>
     /* What you get: only the icon and name show. Tap a box to read more. */
     (function () {
@@ -531,6 +553,17 @@
       });
     })();
     </script>
+<script>
+/* Phone menu: close it after a link is tapped, and when tapping outside it */
+(function () {
+  var chk = document.getElementById('check'); if (!chk) return;
+  document.addEventListener('click', function (e) {
+    if (!chk.checked) return;
+    var inMenu = e.target.closest && (e.target.closest('header nav') || e.target.closest('label.check_btn'));
+    if (!inMenu || (e.target.closest('header nav a, header nav .login-btn'))) chk.checked = false;
+  });
+})();
+</script>
 <script>
 /* Our Team: the team section stays hidden until the menu link is used */
 (function () {

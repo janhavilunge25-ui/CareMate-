@@ -52,6 +52,11 @@ const q = {
   getKv:       db.prepare('SELECT key, value FROM user_kv WHERE user_id = ?'),
   setKv:       db.prepare(`INSERT INTO user_kv (user_id, key, value) VALUES (?, ?, ?)
                            ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value`),
+  adminUsers:  db.prepare(`SELECT u.id, u.name, u.email, u.created_at AS createdAt,
+                             p.data AS profile, p.updated_at AS profileUpdated, pl.goals AS goals,
+                             (SELECT MAX(updated_at) FROM daily_log WHERE user_id = u.id) AS lastLog
+                           FROM users u LEFT JOIN profiles p ON p.user_id = u.id LEFT JOIN plans pl ON pl.user_id = u.id
+                           ORDER BY u.id DESC`),
   wipe: ['profiles', 'plans', 'daily_log', 'reminders', 'user_kv'].map(t => db.prepare(`DELETE FROM ${t} WHERE user_id = ?`))
 };
 
@@ -100,6 +105,13 @@ module.exports = {
   setReminders: (id, arr) => q.setRem.run(id, JSON.stringify(arr)),
   getKv: id => Object.fromEntries(q.getKv.all(id).map(r => [r.key, r.value])),
   setKv: (id, key, value) => q.setKv.run(id, key, String(value)),
+
+  /* Admin only (the route checks ADMIN_EMAIL). Never returns password hashes or session tokens. */
+  adminList: () => q.adminUsers.all().map(r => {
+    const p = parse(r.profile, null) || {}, g = parse(r.goals, null) || p.goals || [];
+    return { id: r.id, name: r.name, email: r.email, createdAt: r.createdAt, age: p.age || '', gender: p.gender || '', condition: p.condition || '',
+             foodPref: p.foodPref || '', goals: g, hasProfile: !!r.profile, lastActive: r.lastLog || r.profileUpdated || r.createdAt };
+  }),
 
   wipeData: id => tx(() => q.wipe.forEach(s => s.run(id)))
 };

@@ -2,19 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>CareMate | Your Health Profile</title>
 <meta name="description" content="Tell CareMate a few details to get your personalised diet, yoga and wellness plan.">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#031716">
-<link rel="icon" href="logo-.png">
+<link rel="icon" href="logo-small.png">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="extras.css">
 <link rel="stylesheet" href="progress.css">
+<link rel="stylesheet" href="mobile.css">
 <script src="theme.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
 </head>
 <body class="hp-profile">
 
@@ -30,8 +34,8 @@
 
 <header>
     <div class="navigation">
-         <a href="index.html" aria-label="Back to CareMate home">
-             <img src="logo-.png" alt="CareMate Logo" class="logo-image"></a>
+         <a href="index.html?home" aria-label="Back to CareMate home" onclick="try{sessionStorage.setItem('cmStayHome','1')}catch(e){}">
+             <img src="logo-small.png" alt="CareMate Logo" class="logo-image" width="120" height="80"></a>
 
         <div class="pf-right">
             <button type="button" class="pf-back" id="pfBack"><i class="fa-solid fa-arrow-left"></i> Back</button>
@@ -349,11 +353,11 @@
     </div>
 </footer>
 
-<script src="api.js"></script>
-<script src="diet-extras.js"></script>
-<script src="progress.js"></script>
-<script src="script.js"></script>
-<script src="extras.js"></script>
-<script src="chatbot.js"></script>
+<script src="api.js" defer></script>
+<script src="diet-extras.js" defer></script>
+<script src="progress.js" defer></script>
+<script src="script.js" defer></script>
+<script src="extras.js" defer></script>
+<script src="chatbot.js" defer></script>
 </body>
 </html>

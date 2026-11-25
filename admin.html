@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#031716">
+<title>CareMate | Admin</title>
+<link rel="icon" href="logo-small.png">
+<style>
+:root{--ink:#031716;--teal:#0a7075;--mint:#e8f2f2;--line:#d5e3e3;--card:#fff;--mut:#52696a;--bad:#b3261e}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--mint);color:var(--ink);min-height:100dvh;
+  padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));line-height:1.5}
+.wrap{max-width:1100px;margin:0 auto}
+header{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;margin-bottom:16px}
+header h1{font-size:1.25rem;display:flex;align-items:center;gap:10px}
+header img{width:44px;height:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 6px 20px rgba(3,23,22,.06)}
+label{display:block;font-size:.85rem;font-weight:600;margin:12px 0 4px}
+input{width:100%;font:inherit;font-size:16px;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;min-height:46px}
+input:focus{outline:2px solid var(--teal);border-color:var(--teal)}
+button{font:inherit;font-weight:600;min-height:44px;padding:10px 18px;border-radius:12px;border:0;background:var(--ink);color:#fff;cursor:pointer}
+button.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+button:disabled{opacity:.6}
+.login{max-width:420px;margin:8vh auto 0}
+.login h2{margin-bottom:4px}
+.login button{width:100%;margin-top:18px}
+.err{color:var(--bad);font-size:.88rem;margin-top:10px;min-height:1.2em}
+.note{color:var(--mut);font-size:.85rem}
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.bar input{flex:1 1 220px}
+.count{color:var(--mut);font-size:.88rem;margin:0 0 10px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);font-size:.9rem;vertical-align:top}
+th{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:#f3f9f9}
+.tag{display:inline-block;background:var(--mint);border-radius:999px;padding:2px 10px;font-size:.75rem;margin:0 4px 4px 0}
+.list{display:none}
+.u{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;background:#fff;cursor:pointer}
+.u b{display:block}.u small{color:var(--mut);display:block;word-break:break-all}
+dl{display:grid;grid-template-columns:150px 1fr;gap:8px 14px}
+dt{font-weight:600;color:var(--mut);font-size:.85rem}dd{word-break:break-word}
+h3{margin:18px 0 8px;font-size:1rem}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--mint);border-radius:12px;padding:12px;font-size:.8rem;max-height:340px;overflow:auto}
+.hide{display:none!important}
+@media(max-width:700px){
+  table{display:none}.list{display:block}
+  dl{grid-template-columns:1fr;gap:2px}dd{margin-bottom:10px}
+  header h1{font-size:1.1rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><img src="logo-small.png" alt="" width="44" height="29"> CareMate admin</h1>
+    <div id="who" class="hide"><span class="note" id="whoMail"></span> <button class="ghost" id="out" type="button">Log out</button></div>
+  </header>
+
+  <!-- sign in -->
+  <section class="card login" id="loginBox">
+    <h2>Owner sign in</h2>
+    <p class="note">Only the CareMate owner account can open this page. Other users never see any data here.</p>
+    <form id="loginForm" autocomplete="on">
+      <label for="em">Email</label><input id="em" type="email" inputmode="email" autocomplete="username" required>
+      <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" required>
+      <button type="submit" id="go">Sign in</button>
+      <p class="err" id="err" role="alert"></p>
+    </form>
+  </section>
+
+  <!-- list of users -->
+  <section class="hide" id="listBox">
+    <div class="card">
+      <div class="bar"><input id="q" type="search" placeholder="Search by name or email" aria-label="Search users"><button class="ghost" id="reload" type="button">Refresh</button></div>
+      <p class="count" id="count"></p>
+      <table><thead><tr><th>Name</th><th>Email</th><th>Focus</th><th>Areas</th><th>Joined</th></tr></thead><tbody id="rows"></tbody></table>
+      <div class="list" id="cards"></div>
+    </div>
+  </section>
+
+  <!-- one user -->
+  <section class="hide" id="detailBox">
+    <div class="card">
+      <button class="ghost" id="back" type="button">&larr; All users</button>
+      <div id="detail"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var TOKEN = 'cmAdminToken', users = [];
+  var tok = function () { try { return sessionStorage.getItem(TOKEN); } catch (e) { return null; } };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function date(s) { var d = new Date(String(s).replace(' ', 'T') + (/Z|\+/.test(s) ? '' : 'Z')); return isNaN(d) ? '' : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); }
+
+  async function api(path, opts) {
+    opts = opts || {}; var h = { 'Content-Type': 'application/json' };
+    if (tok()) h.Authorization = 'Bearer ' + tok();
+    var r = await fetch(path, { method: opts.method || 'GET', headers: h, body: opts.body ? JSON.stringify(opts.body) : undefined });
+    var data = await r.json().catch(function () { return {}; });
+    if (!r.ok) { var e = new Error(data.error || 'Something went wrong.'); e.status = r.status; throw e; }
+    return data;
+  }
+  function show(which) { ['loginBox', 'listBox', 'detailBox'].forEach(function (k) { $(k).classList.toggle('hide', k !== which); }); $('who').classList.toggle('hide', which === 'loginBox'); }
+  function signedOut(msg) { try { sessionStorage.removeItem(TOKEN); } catch (e) {} show('loginBox'); $('err').textContent = msg || ''; }
+
+  $('loginForm').addEventListener('submit', async function (e) {
+    e.preventDefault(); $('err').textContent = ''; $('go').disabled = true; $('go').textContent = 'Signing in…';
+    try {
+      var d = await api('/api/login', { method: 'POST', body: { email: $('em').value, password: $('pw').value } });
+      if (!d.user || !d.user.admin) { try { await fetch('/api/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + d.token } }); } catch (x) {} throw new Error('This account is not the CareMate owner account.'); }
+      sessionStorage.setItem(TOKEN, d.token); $('whoMail').textContent = d.user.email; $('pw').value = ''; await load();
+    } catch (x) { $('err').textContent = x.message; }
+    $('go').disabled = false; $('go').textContent = 'Sign in';
+  });
+
+  async function load() {
+    try { users = (await api('/api/admin/users')).users; } catch (x) { return signedOut(x.status === 401 || x.status === 404 ? 'Please sign in with the owner account.' : x.message); }
+    $('whoMail').textContent = $('whoMail').textContent || 'Owner'; show('listBox'); draw();
+  }
+  function draw() {
+    var f = $('q').value.trim().toLowerCase();
+    var rows = users.filter(function (u) { return !f || (u.name + ' ' + u.email).toLowerCase().indexOf(f) > -1; });
+    $('count').textContent = rows.length + ' of ' + users.length + ' users';
+    $('rows').innerHTML = rows.map(function (u) {
+      return '<tr data-id="' + u.id + '"><td><b>' + esc(u.name) + '</b></td><td>' + esc(u.email) + '</td><td>' + esc(u.condition || '—') + '</td><td>' +
+        (u.goals || []).map(function (g) { return '<span class="tag">' + esc(g) + '</span>'; }).join('') + '</td><td>' + date(u.createdAt) + '</td></tr>';
+    }).join('') || '<tr><td colspan="5">No users yet.</td></tr>';
+    $('cards').innerHTML = rows.map(function (u) {
+      return '<div class="u" data-id="' + u.id + '"><b>' + esc(u.name) + '</b><small>' + esc(u.email) + '</small><div style="margin-top:6px">' +
+        (u.condition ? '<span class="tag">' + esc(u.condition) + '</span>' : '') + (u.goals || []).map(function (g) { return '<span class="tag">' + esc(g) + '</span>'; }).join('') +
+        '</div><small>Joined ' + date(u.createdAt) + '</small></div>';
+    }).join('') || '<p class="note">No users yet.</p>';
+  }
+  function open(id) {
+    api('/api/admin/users/' + id).then(function (d) {
+      var p = d.profile || {}, u = d.user, rows = [['Name', u.name], ['Email', u.email], ['Joined', date(u.createdAt)], ['Full name', p.fullName], ['Age', p.age], ['Weight (kg)', p.weight], ['Height (cm)', p.height],
+        ['Gender', p.gender], ['Activity', p.activity], ['Health focus', p.condition], ['Food preference', p.foodPref], ['Care areas', (d.plan && d.plan.goals || p.goals || []).join(', ')], ['Notes', p.notes]];
+      $('detail').innerHTML = '<h3 style="margin-top:14px">' + esc(u.name) + '</h3><dl>' + rows.filter(function (r) { return r[1]; }).map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('') + '</dl>' +
+        '<h3>Last 30 days of goals</h3><pre>' + esc(Object.keys(d.recentLog).length ? JSON.stringify(d.recentLog, null, 1) : 'No daily goals logged yet.') + '</pre>';
+      show('detailBox'); window.scrollTo(0, 0);
+    }).catch(function (x) { if (x.status === 401 || x.status === 404) signedOut('Session ended. Please sign in again.'); else alert(x.message); });
+  }
+  function pick(e) { var r = e.target.closest('[data-id]'); if (r) open(r.getAttribute('data-id')); }
+  $('rows').addEventListener('click', pick); $('cards').addEventListener('click', pick);
+  $('q').addEventListener('input', draw); $('reload').addEventListener('click', load); $('back').addEventListener('click', function () { show('listBox'); });
+  $('out').addEventListener('click', async function () { try { await api('/api/logout', { method: 'POST' }); } catch (x) {} signedOut(''); });
+  if (tok()) load();
+})();
+</script>
+</body>
+</html>

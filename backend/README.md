@@ -17,3 +17,11 @@ Optional environment variables: `PORT`, `DB_PATH`, `SESSION_DAYS` (default 30), 
 `GET|PUT /api/profile`, `GET|PUT /api/plan`, `GET|PUT /api/log`, `PUT /api/log/:day`,
 `GET /api/dashboard`, `GET|PUT /api/reminders`, `PUT /api/kv/:key`, `DELETE /api/data`, `DELETE /api/me`, `GET /api/health`.
 Protected routes need the header `Authorization: Bearer <token>` (returned by login/register).
+
+## Owner (admin) access
+Set `ADMIN_EMAIL=you@example.com` in Render > Environment, create an account with that email, then open `/admin.html`.
+Only that account can list users and view their details; every other account only ever sees its own data.
+
+## Render notes
+The free plan sleeps when idle (slow first load) and its disk is erased on redeploy. Use a paid plan with a persistent disk
+(set `DB_PATH` to a path on that disk) so user accounts are kept.

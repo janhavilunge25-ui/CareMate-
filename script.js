@@ -1,18 +1,25 @@
-/* ===== Splash screen: shows the CareMate logo, then fades into the page ===== */
+/* ===== Splash screen: short logo flash, then fades into the page =====
+   It no longer waits for every image and font to finish downloading (that made the app feel slow).
+   It is shown only once per visit, and never longer than about a second. */
 (function () {
     const splash = document.querySelector('#splash-screen');
     if (!splash) return;
+    let seen = false;
+    try { seen = sessionStorage.getItem('cmSplash') === '1'; sessionStorage.setItem('cmSplash', '1'); } catch (e) {}
+    if (seen) { splash.remove(); return; }
 
-    const MIN_DISPLAY_MS = 1600; // keep the logo on screen at least this long
-
+    const MIN_DISPLAY_MS = 500;       // keep the logo on screen briefly so it does not flicker
+    const t0 = performance.now();
+    let done = false;
     function hideSplash() {
+        if (done) return; done = true;
         splash.classList.add('fade-out');
         splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+        setTimeout(() => splash.remove(), 900);
     }
-
-    window.addEventListener('load', () => {
-        setTimeout(hideSplash, MIN_DISPLAY_MS);
-    });
+    function ready() { setTimeout(hideSplash, Math.max(0, MIN_DISPLAY_MS - (performance.now() - t0))); }
+    if (document.readyState !== 'loading') ready(); else document.addEventListener('DOMContentLoaded', ready);
+    setTimeout(hideSplash, 1200);     // safety: never stay longer than this
 })();
 
 const loginBtn = document.querySelector('.login-btn');
@@ -895,10 +902,9 @@ const CareMatePlan = (function () {
   const DIETITIAN = {
     name: 'Dhanashree Pundkar', role: 'Dietitian', initials: 'DP',
     fullName: 'Mrs. Dhanashri S. Pundkar',
-    clinic: 'Aadya Diet Consultancy',
+    consultancy: 'Aadya Diet Consultancy',
     qualification: 'M.Sc. (Food & Nutrition), NDEP',
-    title: 'Clinical Dietitian & Nutritionist',
-    currently: 'Dietitian, Sant Tukaram Cancer Hospital, Akola',
+    title: 'Dietitian & Nutritionist',
     previously: 'Former Dietitian, HCG Manavata Cancer Hospital, Nashik',
     email: 'dhanashripsarap@gmail.com',
     phone: '+919096066204',  phoneShow: '9096 066 204',
@@ -1073,7 +1079,7 @@ const CareMatePlan = (function () {
 
   /* Animated pictures supplied for these poses (files sit next to profile.html). Other poses use the cartoon drawing until their pictures are added:
      add a line here, e.g.  bhuj: 'yoga-bhujangasana.gif'  */
-  const POSE_GIF = { vriksha: 'yoga-vrikshasana.gif', tadasana: 'yoga-tadasana.gif', trikona: 'yoga-trikonasana.gif' };
+  const POSE_GIF = { vriksha: 'yoga-vrikshasana.webp', tadasana: 'yoga-tadasana.webp', trikona: 'yoga-trikonasana.webp' };
 
   const poseCell = name => {
     const k = poseKey(name), g = POSE_GIF[k];
@@ -1541,7 +1547,7 @@ const CareMatePlan = (function () {
             ['fa-list-ol', String(rows.length), 'Poses in your routine'],
             ['fa-sun', 'Empty stomach', 'Or 3 hours after a meal']
           ])}
-          <div class="yg-hero"><img src="yoga-vrikshasana.gif" alt="Animation of a woman doing Tree pose on a yoga mat by a lake" loading="lazy">
+          <div class="yg-hero"><img src="yoga-vrikshasana.webp" alt="Animation of a woman doing Tree pose on a yoga mat by a lake" loading="lazy">
             <div><small>Pose of the day</small><b>Vrikshasana · Tree pose</b><p>Stand tall, rest one foot on your inner calf or thigh, and bring your hands overhead. It builds balance, focus and calm. Use a wall if you wobble.</p></div></div>
           <table class="cm-table cm-t3 cm-yoga">
             <tr><th>Pose</th><th>Benefit</th><th>Time</th></tr>
@@ -2335,11 +2341,10 @@ const CareMatePlan = (function () {
     ],
       detailsTitle: 'Dietitian Details',
       details: [
-        ['Clinic',        'Aadya Diet Consultancy'],
+        ['Consultancy',   'Aadya Diet Consultancy'],
         ['Name',          'Mrs. Dhanashri S. Pundkar'],
         ['Qualification', 'M.Sc. (Food & Nutrition), NDEP'],
-        ['Role',          'Clinical Dietitian & Nutritionist'],
-        ['Currently',     'Dietitian, Sant Tukaram Cancer Hospital, Akola'],
+        ['Role',          'Dietitian & Nutritionist'],
         ['Previously',    'Former Dietitian, HCG Manavata Cancer Hospital, Nashik']
       ],
       card: 'images/dhanashree-pundkar-card.jpg', cardAlt: ['dhanashree-pundkar-card.jpg', 'card.jpeg', 'images/card.jpeg'],

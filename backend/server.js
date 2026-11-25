@@ -31,6 +31,9 @@ const SESSION_DAYS = +process.env.SESSION_DAYS || 30;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';          // tokens are sent in a header, not cookies
 const SITE_ROOT = path.resolve(__dirname, '..');
 const MAX_BODY = 200 * 1024;
+/* Owner access: set ADMIN_EMAIL (comma separated for more than one) in Render > Environment. Only these accounts can open /admin.html data. */
+const ADMIN_EMAILS = String(process.env.ADMIN_EMAIL || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
+const isAdmin = u => !!u && ADMIN_EMAILS.includes(String(u.email).toLowerCase());
 
 /* ---------- helpers ---------- */
 class HttpError extends Error { constructor(status, message) { super(message); this.status = status; } }
@@ -81,7 +84,7 @@ const dayOk = d => /^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(Date.parse(d +
 const cleanDay = v => ({ water: int(v && v.water, 0, 40), meals: int(v && v.meals, 0, 10), yoga: int(v && v.yoga, 0, 1), calm: int(v && v.calm, 0, 1) });
 const GOALS = ['diet', 'yoga', 'meditation', 'dietitian'];
 
-const publicUser = u => ({ id: u.id, name: u.name, email: u.email });
+const publicUser = u => ({ id: u.id, name: u.name, email: u.email, admin: isAdmin(u) });
 function snapshot(id) {
   return { profile: store.getProfile(id), plan: store.getPlan(id), log: store.getLog(id), reminders: store.getReminders(id), kv: store.getKv(id) };
 }
@@ -206,6 +209,20 @@ async function api(req, res, url) {
   if (req.method === 'OPTIONS') return send(res, 204, '');
   const user = authed(), uid = user.id;
 
+  /* ----- owner view: every other route only ever returns the logged-in user's OWN data ----- */
+  if (url.pathname.startsWith('/api/admin/')) {
+    if (!isAdmin(user)) bad('Not found.', 404);                      // 404 so normal users cannot even tell it exists
+    if (route === 'GET /api/admin/users') return send(res, 200, { users: store.adminList() });
+    const one = url.pathname.match(/^\/api\/admin\/users\/(\d{1,12})$/);
+    if (req.method === 'GET' && one) {
+      const target = store.findById(+one[1]); if (!target) bad('User not found.', 404);
+      const log = store.getLog(target.id), days = Object.keys(log).sort().slice(-30);
+      return send(res, 200, { user: { id: target.id, name: target.name, email: target.email, createdAt: target.created_at },
+        profile: store.getProfile(target.id), plan: store.getPlan(target.id), recentLog: Object.fromEntries(days.map(k => [k, log[k]])) });
+    }
+    bad('Not found.', 404);
+  }
+
   if (route === 'GET /api/me') return send(res, 200, { user: publicUser(user) });
   if (route === 'GET /api/sync') return send(res, 200, snapshot(uid));
 
@@ -266,7 +283,13 @@ async function api(req, res, url) {
   bad('Not found.', 404);
 }
 
-/* ---------- static website (so http://localhost:3000 just works) ---------- */
+/* ---------- static website (so http://localhost:3000 just works) ----------
+   Speed: files are compressed (brotli/gzip, kept in memory) and cached by the browser, so the site opens fast on slow mobile data. */
+const zlib = require('node:zlib');
+const COMPRESSIBLE = new Set(['.html', '.css', '.js', '.svg', '.json']);
+const LONG_CACHE = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.mp3']);
+const fileCache = new Map();          // path -> { mtime, size, raw, br, gz, etag }
+
 function serveStatic(req, res, url) {
   if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, { error: 'Method not allowed.' });
   let rel; try { rel = decodeURIComponent(url.pathname); } catch (e) { return send(res, 400, { error: 'Bad path.' }); }
@@ -274,9 +297,34 @@ function serveStatic(req, res, url) {
   const file = path.resolve(SITE_ROOT, '.' + rel);
   const inside = file.startsWith(SITE_ROOT + path.sep);
   const hidden = path.relative(SITE_ROOT, file).split(path.sep).some(p => p.startsWith('.') || p === 'backend' || p === 'node_modules');
-  const type = MIME[path.extname(file).toLowerCase()];
+  const ext = path.extname(file).toLowerCase(), type = MIME[ext];
   if (!inside || hidden || !type) return send(res, 404, { error: 'Not found.' });
-  fs.readFile(file, (err, buf) => err ? send(res, 404, { error: 'Not found.' }) : send(res, 200, buf, { 'Content-Type': type, 'Cache-Control': 'no-cache' }));
+  fs.stat(file, (err, st) => {
+    if (err || !st.isFile()) return send(res, 404, { error: 'Not found.' });
+    let c = fileCache.get(file);
+    const fresh = c && c.mtime === st.mtimeMs && c.size === st.size;
+    const headers = {
+      'Content-Type': type, 'Vary': 'Accept-Encoding', 'X-Frame-Options': 'SAMEORIGIN', 'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Cache-Control': LONG_CACHE.has(ext) ? 'public, max-age=604800, stale-while-revalidate=86400' : 'no-cache'
+    };
+    const finish = entry => {
+      headers.ETag = entry.etag;
+      if (req.headers['if-none-match'] === entry.etag) return send(res, 304, '', headers);
+      const ae = String(req.headers['accept-encoding'] || '');
+      let body = entry.raw;
+      if (COMPRESSIBLE.has(ext)) { if (/\bbr\b/.test(ae)) { body = entry.br; headers['Content-Encoding'] = 'br'; } else if (/\bgzip\b/.test(ae)) { body = entry.gz; headers['Content-Encoding'] = 'gzip'; } }
+      headers['Content-Length'] = body.length;
+      if (req.method === 'HEAD') return send(res, 200, '', headers);
+      send(res, 200, body, headers);
+    };
+    if (fresh) return finish(c);
+    fs.readFile(file, (e2, buf) => {
+      if (e2) return send(res, 404, { error: 'Not found.' });
+      c = { mtime: st.mtimeMs, size: st.size, raw: buf, etag: '"' + st.size.toString(16) + '-' + Math.round(st.mtimeMs).toString(16) + '"' };
+      if (COMPRESSIBLE.has(ext)) { c.gz = zlib.gzipSync(buf, { level: 9 }); c.br = zlib.brotliCompressSync(buf, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 9 } }); }
+      fileCache.set(file, c); finish(c);
+    });
+  });
 }
 
 const server = http.createServer(async (req, res) => {
