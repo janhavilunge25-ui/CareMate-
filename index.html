@@ -15,21 +15,6 @@
     <link rel="stylesheet" href="home-dash.css">
     <link rel="stylesheet" href="progress.css">
     <link rel="stylesheet" href="mobile.css">
-<script>
-/* Signed in? Reopening the app goes straight to the health profile / plan, not the home page.
-   Tapping the logo or "Home" from inside the app sets a one-time flag so the home page still opens. */
-(function () {
-  try {
-    var stay = sessionStorage.getItem('cmStayHome') || /[?&]home\b/.test(location.search);
-    if (stay) { sessionStorage.removeItem('cmStayHome'); if (history.replaceState && /[?&]home\b/.test(location.search)) history.replaceState(null, '', location.pathname + location.hash); return; }
-    if (location.hash && location.hash !== '#' && location.hash !== '#home') return;   // a link to a section: leave it alone
-    var u = localStorage.getItem('careMateUser'), t = localStorage.getItem('careMateToken');
-    if (!u || !t) return;
-    var p = JSON.parse(localStorage.getItem('careMateProfile') || 'null');
-    location.replace(p && p.goals && p.goals.length ? 'profile.html#plan' : 'profile.html');
-  } catch (e) {}
-})();
-</script>
 <script src="theme.js"></script>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -554,13 +539,14 @@
     })();
     </script>
 <script>
-/* Phone menu: close it after a link is tapped, and when tapping outside it */
+/* Phone menu (the 3 lines): the checkbox + label do the opening; this only closes it after a link tap or a tap outside */
 (function () {
   var chk = document.getElementById('check'); if (!chk) return;
   document.addEventListener('click', function (e) {
     if (!chk.checked) return;
-    var inMenu = e.target.closest && (e.target.closest('header nav') || e.target.closest('label.check_btn'));
-    if (!inMenu || (e.target.closest('header nav a, header nav .login-btn'))) chk.checked = false;
+    var t = e.target; if (!t || !t.closest) return;
+    if (t === chk || t.closest('label.check_btn')) return;                     // the 3-line button itself
+    if (t.closest('header nav a, header nav .login-btn') || !t.closest('header nav')) chk.checked = false;
   });
 })();
 </script>

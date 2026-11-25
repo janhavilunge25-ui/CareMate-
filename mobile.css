@@ -19,12 +19,6 @@ button, [role="button"], a { touch-action: manipulation; }
 
 /* ---------- tablets and phones ---------- */
 @media (max-width: 900px) {
-  /* faster scrolling: a fixed background image and heavy blur repaint on every scroll frame on phones */
-  body { background-attachment: scroll !important; min-height: 100vh; min-height: 100dvh; }
-  .pf-bg .blob { filter: none; opacity: .22; animation: none; }
-  .pf-bg .f { animation: none; }
-  #splash-screen { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(255,255,255,.96); }
-
   /* room for the phone's notch / home bar */
   header { padding-top: env(safe-area-inset-top, 0px); }
   .footer, footer { padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
@@ -116,11 +110,27 @@ button, [role="button"], a { touch-action: manipulation; }
   .sec-card, .cb-panel { max-height: 92vh; max-height: 92dvh; }
 }
 
-/* chat helper button must not cover the bottom navigation */
+/* chat helper: smaller window on phones, and it never covers the bottom navigation */
 @media (max-width: 700px) {
-  #cbLauncher, .cb-fab, .cb-launch { bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important; right: 14px !important; }
-  .cb-panel, .cb-win { left: 8px !important; right: 8px !important; width: auto !important; max-width: none !important;
-    bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important; max-height: 82vh; max-height: 82dvh; }
+  .cb-box { width: min(310px, calc(100vw - 24px)) !important; max-height: min(430px, 58vh) !important; max-height: min(430px, 58dvh) !important;
+    right: 12px !important; left: auto !important; bottom: 84px !important; border-radius: 16px !important; font-size: 13px; }
+  body.hp-profile .cb-box { bottom: 140px !important; }
+  .cb-head { padding: 8px 10px !important; gap: 8px !important; }
+  .cb-av { width: 30px !important; height: 30px !important; font-size: 13px !important; }
+  .cb-box .cb-m { font-size: 13px !important; line-height: 1.4; }
+  .cb-box button { font-size: 12px !important; min-height: 32px !important; padding-top: 5px; padding-bottom: 5px; }
+  .cb-box input, .cb-box textarea { font-size: 15px !important; min-height: 38px !important; }
+  .cb-fab { width: 50px !important; height: 50px !important; font-size: 19px !important; right: 14px !important; bottom: 16px !important; }
+  body.hp-profile .cb-fab { bottom: 84px !important; }
+
+  /* "Welcome back, name" bar: a tidy rounded bar above the chat button instead of a big oval */
+  .wb { left: 12px !important; right: 12px !important; bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important; transform: none !important;
+    border-radius: 14px !important; padding: 9px 10px 9px 14px !important; gap: 8px !important; flex-wrap: nowrap !important; justify-content: space-between !important;
+    font-size: 13px; line-height: 1.25; }
+  .wb > span { flex: 1 1 auto; min-width: 0; }
+  .wb a, .wb .wb-go { flex: none; padding: 8px 12px !important; font-size: 12.5px; white-space: nowrap; }
+}
+@media (max-width: 700px) {
 }
 
 /* small phones */

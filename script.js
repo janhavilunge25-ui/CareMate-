@@ -1,25 +1,21 @@
-/* ===== Splash screen: short logo flash, then fades into the page =====
-   It no longer waits for every image and font to finish downloading (that made the app feel slow).
-   It is shown only once per visit, and never longer than about a second. */
+/* ===== Splash screen: the blurred site with the CareMate logo and a spinner, then it fades into the page =====
+   Shown every time the app is opened. It waits only for the page text (not every image), so it is quick. */
 (function () {
     const splash = document.querySelector('#splash-screen');
     if (!splash) return;
-    let seen = false;
-    try { seen = sessionStorage.getItem('cmSplash') === '1'; sessionStorage.setItem('cmSplash', '1'); } catch (e) {}
-    if (seen) { splash.remove(); return; }
-
-    const MIN_DISPLAY_MS = 500;       // keep the logo on screen briefly so it does not flicker
+    const MIN_DISPLAY_MS = 1100;      // long enough to see the logo, like before
+    const MAX_DISPLAY_MS = 2600;      // never stay longer than this
     const t0 = performance.now();
     let done = false;
     function hideSplash() {
         if (done) return; done = true;
         splash.classList.add('fade-out');
         splash.addEventListener('transitionend', () => splash.remove(), { once: true });
-        setTimeout(() => splash.remove(), 900);
+        setTimeout(() => splash.remove(), 1000);
     }
     function ready() { setTimeout(hideSplash, Math.max(0, MIN_DISPLAY_MS - (performance.now() - t0))); }
     if (document.readyState !== 'loading') ready(); else document.addEventListener('DOMContentLoaded', ready);
-    setTimeout(hideSplash, 1200);     // safety: never stay longer than this
+    setTimeout(hideSplash, MAX_DISPLAY_MS);
 })();
 
 const loginBtn = document.querySelector('.login-btn');
