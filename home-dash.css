@@ -1,0 +1,38 @@
+/* ===== Home page: smaller, clearly-labelled sample preview + live "Today's goals / Your report" ===== */
+
+/* --- sample preview (shown to visitors who are not logged in) --- */
+.hp-sample-note{ max-width:720px; margin:0 auto 10px; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px 10px; text-align:center; font-size:.9em; color:#3b6577; }
+.hp-sample-badge{ display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:100px; background:#fff4e5; color:#8a4600; border:1px solid #f2d3a6; font-weight:600; font-size:.92em; }
+.hp-sample-link{ background:none; border:0; padding:0; font:inherit; font-weight:600; color:var(--sage,#0a7075); text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+.hp-sample-link:focus-visible{ outline:2px solid var(--sage,#0a7075); outline-offset:3px; border-radius:4px; }
+
+#hpSample.hp-dp{ max-width:720px; font-size:.86em; border:1.5px dashed #e3b779; position:relative; }
+#hpSample .hp-dp-body{ grid-template-columns:1fr; position:relative; }
+#hpSample .hp-dp-side{ display:none; }                         /* smaller: the sidebar is not needed to understand the preview */
+#hpSample .hp-dp-main{ padding:16px 18px 18px; }
+#hpSample .hp-dp-tile{ padding:10px 6px; }
+#hpSample .hp-dp-ring{ width:48px; height:48px; } #hpSample .hp-dp-ring::before{ inset:5px; }
+#hpSample .hp-dp-meal{ padding:7px 10px; } #hpSample .hp-dp-meal em{ width:32px; height:32px; font-size:.95em; }
+#hpSample .hp-dp-bars{ min-height:96px; }
+#hpSample .hp-dp-tag{ background:#fff4e5; color:#8a4600; border:1px solid #f2d3a6; }
+#hpSample .hp-dp-body::after{ content:"SAMPLE"; position:absolute; inset:0; display:grid; place-content:center; font-weight:700; font-size:5.2em; letter-spacing:.2em; color:rgba(10,112,117,.07); transform:rotate(-14deg); pointer-events:none; }
+@media(max-width:700px){ #hpSample.hp-dp{ font-size:.82em; } #hpSample .hp-dp-cols{ grid-template-columns:1fr; } #hpSample .hp-dp-body::after{ font-size:3.4em; } }
+
+/* --- live dashboard (shown to logged-in users in place of the sample) --- */
+.hp-live.cm-card{ max-width:980px; margin:0 auto; padding:22px 22px 20px; border-radius:24px; text-align:left; box-shadow:0 18px 44px rgba(3,47,48,.10); }
+.hp-live-head{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
+.hp-live-head h2{ font-size:1.35em; line-height:1.2; } .hp-live-head p{ font-size:.88em; color:var(--cm-muted); margin-top:2px; }
+.hp-live-chips{ display:flex; flex-wrap:wrap; gap:8px; }
+.hp-live-chip{ display:inline-flex; align-items:center; gap:7px; padding:7px 13px; border-radius:100px; font-size:.82em; font-weight:600; background:#fff4e5; color:#a35200; border:1px solid #f2d3a6; }
+.hp-live-chip.ring{ background:var(--cm-soft); color:var(--cm-ink); border-color:rgba(10,112,117,.25); }
+.hp-live .cm-dgrid{ margin-top:0; }
+.hp-live-hint{ display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; margin:0 0 12px; padding:10px 14px; border-radius:14px; background:var(--cm-soft); font-size:.86em; color:var(--cm-ink); }
+.hp-live-hint a{ font-weight:600; color:var(--cm-sage); }
+.hp-live-foot{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-top:14px; }
+.hp-live-foot a.hp-btn{ font-size:.9em; }
+.hp-live-foot small{ color:var(--cm-muted); font-size:.78em; }
+@media(max-width:700px){ .hp-live.cm-card{ padding:16px 14px; border-radius:18px; } .cm-dgrid{ grid-template-columns:1fr; } .cm-step button{ width:44px; height:44px; } .cm-gtog{ padding:11px 16px; } }
+.hp-live a.cm-gtog{ text-decoration:none; display:inline-block; text-align:center; }
+
+/* the colour variables below only exist on the profile page, so define them here for the home dashboard */
+.hp-live{ --ac:#0a7075; --ac2:#032f30; --ac3:#0c969c; --soft:#6ba3be; --slate:#274d60; --tint:#e8f4f4; --line:#cfe3e4; --ink:#031716; --card:#fff; }

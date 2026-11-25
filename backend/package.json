@@ -1,0 +1,12 @@
+{
+  "name": "caremate-backend",
+  "version": "1.0.0",
+  "description": "CareMate API: accounts, profile, plan, daily goal log and reminders (SQLite, zero dependencies)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --no-warnings server.js",
+    "test": "node --no-warnings test.js"
+  },
+  "engines": { "node": ">=22.5.0" },
+  "license": "MIT"
+}
