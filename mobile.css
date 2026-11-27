@@ -183,3 +183,11 @@ button, [role="button"], a { touch-action: manipulation; }
 }
 .cm-rtools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .cm-rtools .cm-btn.on { background: var(--ac, #0a7075); color: #fff; }
+
+/* Home page header on phones: menu button and logo sit at the top-left corner */
+@media (max-width: 858px) {
+  header .navigation { justify-content: flex-start !important; gap: 6px; padding-left: 4px !important; }
+  header { padding-left: 8px !important; padding-right: 12px !important; }
+  header .navigation .check_btn { margin: 0 !important; padding: 10px 12px !important; }
+  header .navigation .logo-image { margin-right: 0 !important; }
+}
