@@ -72,7 +72,7 @@
   };
   window.cmNotify = function (body) {
     if (!window.cmNotifyOn()) return;
-    var opts = { body: body, icon: '4th.jpg', badge: '4th.jpg', tag: 'caremate-' + body, renotify: true, vibrate: [200, 100, 200] };
+    var opts = { body: body, icon: 'logo-small.png', tag: 'caremate-' + body, renotify: true, vibrate: [200, 100, 200] };
     var fallback = function () { try { new Notification('CareMate', opts); } catch (e) {} };
     try {
       if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {

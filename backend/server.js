@@ -184,13 +184,15 @@ const resets = new Map();                                   // email -> { hash, 
 const RESET_MIN = 15;
 const sha256 = x => crypto.createHash('sha256').update(x).digest('hex');
 async function sendResetEmail(user, code) {
-  const e = process.env, tpl = e.EMAILJS_RESET_TEMPLATE_ID;
-  if (!tpl) {
-    console.log('[CareMate] Email is not set up (EMAILJS_RESET_TEMPLATE_ID missing). Reset code for ' + user.email + ': ' + code);   // Render logs only
-    return false;
-  }
+  const e = process.env;
+  /* Uses EMAILJS_RESET_TEMPLATE_ID if you made a special template; otherwise reuses the Contact form's template
+     (its "To Email" must be {{to_email}} in EmailJS so the code goes to the user). */
+  const tpl = e.EMAILJS_RESET_TEMPLATE_ID || 'template_7n6qpik';
+  const text = 'Your CareMate password reset code is ' + code + '. It works for ' + RESET_MIN + ' minutes. If you did not ask for this, you can ignore this email.';
   const payload = { service_id: e.EMAILJS_SERVICE_ID || 'service_4h46t3y', template_id: tpl, user_id: e.EMAILJS_PUBLIC_KEY || 'MG6nTVi7clYTBAYfh',
-    template_params: { to_email: user.email, to_name: user.name, code, minutes: RESET_MIN } };
+    template_params: { to_email: user.email, to_name: user.name, code, minutes: RESET_MIN,
+      from_name: 'CareMate', name: 'CareMate', user_name: 'CareMate', topic: 'Password reset', title: 'Password reset',
+      subject: 'Your CareMate password reset code', message: text } };
   if (e.EMAILJS_PRIVATE_KEY) payload.accessToken = e.EMAILJS_PRIVATE_KEY;
   const r = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
     method: 'POST', headers: { 'content-type': 'application/json' }, signal: AbortSignal.timeout(15000), body: JSON.stringify(payload)

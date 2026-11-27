@@ -1607,9 +1607,8 @@ const CareMatePlan = (function () {
           <div class="cm-rtools">
             <button class="cm-btn small ghost" type="button" id="cmRemNotify"><i class="fa-solid fa-bell"></i> <span id="cmRemNotifyTxt">Turn on notifications</span></button>
             <button class="cm-btn small ghost" type="button" id="cmRemTest"><i class="fa-solid fa-volume-high"></i> Test alarm</button>
-            <button class="cm-btn small ghost" type="button" id="cmRemIcs"><i class="fa-solid fa-calendar-plus"></i> Add to phone calendar</button>
           </div>
-          <p class="cm-note" id="cmRemStatus">Reminders ring and notify while CareMate is open. To be alerted even when the app is closed, tap <b>Add to phone calendar</b>: your phone will then ring at these times every day.</p>
+          <p class="cm-note" id="cmRemStatus">Reminders ring and notify while CareMate is open or running in the background.</p>
           <p class="cm-note cm-motive">Small reminders build big habits.</p>`
       };
     },
@@ -1710,24 +1709,6 @@ const CareMatePlan = (function () {
     }));
   }
 
-  function icsEscape(t) { return String(t).replace(/[\\;,]/g, m => '\\' + m).replace(/\n/g, '\\n'); }
-  function downloadIcs() {
-    const act = reminders.filter(r => r.on);
-    if (!act.length) { say('Turn on at least one reminder first'); return; }
-    const d = new Date(), ymd = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
-    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//CareMate//Reminders//EN', 'CALSCALE:GREGORIAN'];
-    act.forEach((r, i) => {
-      const hm = r.time.replace(':', '') + '00';
-      lines.push('BEGIN:VEVENT', 'UID:caremate-' + i + '-' + r.time.replace(':', '') + '@caremate', 'DTSTAMP:' + ymd + 'T000000',
-        'DTSTART:' + ymd + 'T' + hm, 'DURATION:PT10M', 'RRULE:FREQ=DAILY', 'SUMMARY:CareMate: ' + icsEscape(r.label),
-        'BEGIN:VALARM', 'ACTION:AUDIO', 'TRIGGER:PT0S', 'END:VALARM', 'END:VEVENT');
-    });
-    lines.push('END:VCALENDAR');
-    const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar' }), a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = 'caremate-reminders.ics'; document.body.appendChild(a); a.click();
-    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
-    say('Open the downloaded file to add the daily alarms to your calendar');
-  }
   function bindReminders() {
     drawReminders(); paintNotify();
     const nb = $('cmRemNotify'); if (nb) nb.addEventListener('click', () => {
@@ -1735,7 +1716,6 @@ const CareMatePlan = (function () {
       else askNotify();
     });
     const tb = $('cmRemTest'); if (tb) tb.addEventListener('click', () => ring({ label: 'Test reminder' }, true));
-    const ib = $('cmRemIcs'); if (ib) ib.addEventListener('click', downloadIcs);
     const form = $('cmRemAdd'); if (!form) return;
     form.addEventListener('submit', e => {
       e.preventDefault();
