@@ -28,7 +28,7 @@
 
   /* App-style bottom bar: Home, Plan, +, Care, Profile */
   const nav = document.createElement('nav'); nav.className = 'bn'; nav.setAttribute('aria-label', 'Quick menu');
-  nav.innerHTML = '<a href="index.html"><i class="fa-solid fa-house"></i>Home</a><button type="button" data-a="plan"><i class="fa-solid fa-chart-pie"></i>Plan</button><button type="button" class="plus" data-a="plus" aria-label="Quick actions"><i class="fa-solid fa-plus"></i></button><button type="button" data-a="care"><i class="fa-solid fa-user-doctor"></i>Care</button><button type="button" data-a="shop"><i class="fa-solid fa-basket-shopping"></i>Shopping</button>';
+  nav.innerHTML = '<a href="index.html" data-home><i class="fa-solid fa-house"></i>Home</a><button type="button" data-a="plan"><i class="fa-solid fa-chart-pie"></i>Plan</button><button type="button" class="plus" data-a="plus" aria-label="Quick actions"><i class="fa-solid fa-plus"></i></button><button type="button" data-a="care"><i class="fa-solid fa-user-doctor"></i>Care</button><button type="button" data-a="shop"><i class="fa-solid fa-basket-shopping"></i>Shopping</button>';
   const pop = document.createElement('div'); pop.className = 'bn-pop'; pop.hidden = true;
   pop.innerHTML = '<button type="button" data-p="water"><i class="fa-solid fa-droplet"></i> Add a glass of water</button><button type="button" data-p="protein"><i class="fa-solid fa-egg"></i> Protein guide</button><button type="button" data-p="portion"><i class="fa-solid fa-scale-balanced"></i> Portion guide</button>';
   document.body.append(nav, pop);
@@ -90,7 +90,7 @@
   }
   window.cmApply();
   const sp = document.createElement('div'); sp.className = 'sec-panel st-card'; sp.hidden = true;
-  sp.innerHTML = '<div class="sec-card" role="dialog" aria-modal="true" aria-label="Settings"><h3><i class="fa-solid fa-gear"></i> Settings</h3>' +
+  sp.innerHTML = '<div class="sec-card" role="dialog" aria-modal="true" aria-label="Settings"><div class="st-top"><h3><i class="fa-solid fa-gear"></i> Settings</h3><button type="button" class="st-x" data-g="x" aria-label="Close settings"><i class="fa-solid fa-xmark"></i></button></div>' +
     '<div class="st-me"><button type="button" class="st-dp" data-g="dpmenu" aria-label="Change profile photo"><span class="st-dpimg"></span><span class="st-cam"><i class="fa-solid fa-camera"></i></span></button>' +
     '<div class="st-who"><b id="stName">Your name</b><small id="stId">ID</small></div></div>' +
     '<div class="st-dpm" hidden><button type="button" data-g="gal"><i class="fa-solid fa-image"></i> Choose from gallery</button><button type="button" data-g="cam"><i class="fa-solid fa-camera"></i> Take photo</button><button type="button" data-g="del" class="st-del"><i class="fa-solid fa-trash"></i> Remove photo</button></div>' +
@@ -98,6 +98,7 @@
     '<label class="st-lab" for="stNameIn">Name</label><input id="stNameIn" class="st-in" maxlength="40" autocomplete="name">' +
     '<div class="st-h">Reminders</div>' +
     '<div class="st-row"><span>Reminder notifications</span><button type="button" class="st-sw" data-t="notify" aria-label="Reminder notifications"></button></div>' +
+    '<small class="st-note" id="stNotifyMsg" role="status"></small>' +
     '<div class="st-row"><span>Reminder sound</span><select id="stTone" class="st-in st-sel" aria-label="Reminder sound"></select></div>' +
     '<div class="st-tbtns"><button type="button" data-g="play"><i class="fa-solid fa-play"></i> Preview</button><button type="button" data-g="music"><i class="fa-solid fa-music"></i> Use my own music</button></div>' +
     '<small class="st-note" id="stMusicNote"></small><input type="file" id="stMusic" accept="audio/*" hidden>' +
@@ -106,11 +107,12 @@
     '<div class="st-row"><span>Reduce animations</span><button type="button" class="st-sw" data-t="calm" aria-label="Reduce animations"></button></div>' +
     '<button type="button" class="act" data-g="edit"><i class="fa-solid fa-user-pen"></i> Edit my profile</button>' +
     '<button type="button" class="act" data-g="sec"><i class="fa-solid fa-shield-halved"></i> Privacy &amp; PIN lock</button>' +
+    '<button type="button" class="act" data-g="pw"><i class="fa-solid fa-key"></i> Change password</button>' +
     '<button type="button" class="act" data-g="wa"><i class="fa-brands fa-whatsapp"></i> Message the dietitian</button>' +
     '<button type="button" class="act" data-g="out"><i class="fa-solid fa-arrow-right-from-bracket"></i> Log out</button>' +
     '<button type="button" class="danger" data-g="wipe">Delete all my data</button><button type="button" class="ghost" data-g="x">Close</button></div>';
   document.body.appendChild(sp);
-  const on = k => k === 'quote' ? S.quote !== false : k === 'notify' ? ('Notification' in window && Notification.permission === 'granted') : !!S[k];
+  const on = k => k === 'quote' ? S.quote !== false : k === 'notify' ? S.notify !== false : !!S[k];
   const getU = () => { try { return JSON.parse(localStorage.getItem('careMateUser') || 'null') || {}; } catch (e) { return {}; } };
   const putU = u => { try { localStorage.setItem('careMateUser', JSON.stringify(u)); } catch (e) {} };
   const uid = () => getU().email || 'Not set';
@@ -132,6 +134,12 @@
     toneSel.value = (S.tone === 'custom' && !S.toneData) ? 'chime' : (S.tone || 'chime');
     sp.querySelector('#stMusicNote').textContent = S.toneData ? 'Your music: ' + (S.toneName || 'selected') : 'Pick any short song or tune from your device (up to 1.5 MB).';
     sp.querySelectorAll('.st-sw').forEach(b => b.setAttribute('aria-pressed', on(b.dataset.t)));
+    const nm2 = sp.querySelector('#stNotifyMsg');
+    if (nm2 && !nm2._keep) nm2.textContent = S.notify === false ? 'Reminders are OFF. Nothing will ring or pop up.' :
+      !('Notification' in window) ? 'Reminders ON: they ring inside the app. This browser cannot show pop-up notifications.' :
+      Notification.permission === 'granted' ? 'Reminders are ON: pop-up notification, sound and vibration.' :
+      Notification.permission === 'denied' ? 'Reminders ON in the app, but pop-ups are blocked. Allow notifications for this site in your browser settings.' :
+      'Reminders ON in the app. Tap the switch off and on again to allow pop-up notifications.';
   }
   /* resize a chosen photo to a small square so it fits in storage */
   function readDp(file) {
@@ -191,7 +199,14 @@
     if (ev.target === sp) { sp.hidden = true; return; }
     const t = ev.target.closest('[data-t]'), g = ev.target.closest('[data-g]');
     if (t) { const k = t.dataset.t;
-      if (k === 'notify') { if ('Notification' in window) Notification.requestPermission().then(paintSettings); }
+      if (k === 'notify') {
+        const note = sp.querySelector('#stNotifyMsg');
+        if (S.notify !== false) { S.notify = false; window.cmSave(); paintSettings(); }                 // switch OFF
+        else {                                                                                            // switch ON, then ask the phone for permission
+          S.notify = true; window.cmSave(); paintSettings();
+          if (window.cmEnableNotify) window.cmEnableNotify(function (ok, text) { if (note) { note._keep = true; note.textContent = ok ? 'Reminders are ON: pop-up notification, sound and vibration. A test was sent.' : 'Reminders ON in the app. ' + text; } S.notify = true; window.cmSave(); paintSettings(); if (!ok && window.cmPlayTone) window.cmPlayTone(); setTimeout(function () { if (note) note._keep = false; }, 6000); });
+        }
+      }
       else { S[k] = k === 'quote' ? !(S.quote !== false) : !S[k]; window.cmSave(); paintSettings(); } }
     if (g) { const a = g.dataset.g;
       if (a === 'dpmenu') { const m = sp.querySelector('.st-dpm'); m.hidden = !m.hidden; return; }
@@ -200,11 +215,12 @@
       if (a === 'del') { delete S.dp; window.cmSave(); sp.querySelector('.st-dpm').hidden = true; paintSettings(); return; }
       if (a === 'play') { window.cmPlayTone(); return; }
       if (a === 'music') { sp.querySelector('#stMusic').click(); return; }
-      sp.hidden = a === 'x' || a === 'edit' || a === 'sec' || a === 'wa' || a === 'out' || a === 'wipe' || sp.hidden;
+      sp.hidden = a === 'x' || a === 'pw' || a === 'edit' || a === 'sec' || a === 'wa' || a === 'out' || a === 'wipe' || sp.hidden;
       if (a === 'edit') { if (!$('cmCard').hidden) CareMatePlan.hide(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      if (a === 'pw' && window.CareMatePassword) CareMatePassword.openChange();
       if (a === 'sec') $('pfSecure').click();
       if (a === 'wa') window.open('https://wa.me/919096066204?text=' + encodeURIComponent('Hello, I have a question from CareMate.'), '_blank', 'noopener');
-      if (a === 'out') { try { localStorage.removeItem('careMateUser'); } catch (e) {} window.location.href = 'index.html'; }
+      if (a === 'out') { try { localStorage.removeItem('careMateUser'); } catch (e) {} window.location.replace('index.html'); }
       if (a === 'wipe') $('secWipe').click(); }
   });
   if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => window.cmApply());
@@ -262,11 +278,15 @@
     if (ls.get(K)) { ask('remove', 'Remove PIN lock', 'Enter your current PIN', null); return; }
     ask('set1', 'Set a PIN', 'Choose 4 digits', m => CareMatePlan.say(m));
   });
-  $('secWipe').addEventListener('click', () => {
+  $('secWipe').addEventListener('click', async () => {
     if (!confirm('Delete your profile, plan, progress, reminders and PIN? This also removes them from your account.')) return;
-    if (window.CareMateAPI) CareMateAPI.wipeRemote();
+    const btn = $('secWipe'); btn.disabled = true; const t0 = btn.textContent; btn.textContent = 'Deleting…';
+    const ok = window.CareMateAPI ? await CareMateAPI.wipeRemote() : true;
+    btn.disabled = false; btn.textContent = t0;
+    if (!ok) { alert('We could not reach the server, so your account data was NOT deleted. Please check your internet and try again.'); return; }
     try { Object.keys(localStorage).filter(k => k.indexOf('careMate') === 0).forEach(k => localStorage.removeItem(k)); } catch (e) {}
-    window.location.href = 'index.html';
+    try { sessionStorage.clear(); } catch (e) {}
+    window.location.replace('index.html');
   });
 })();
 
@@ -308,4 +328,12 @@
     const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { const t = e.target; t.classList.add('in'); io.unobserve(t); setTimeout(() => { t.classList.remove('pf-rv', 'in'); t.style.transitionDelay = ''; }, 900); } }), { threshold: .08 });
     items.forEach((el, i) => { el.classList.add('pf-rv'); el.style.transitionDelay = (i % 3) * 70 + 'ms'; io.observe(el); });
   }
+})();
+
+/* keep the sticky "Your areas" bar just under the header, whatever height the header has on this phone */
+(function () {
+  const set = () => { const h = document.querySelector('header'); if (h) document.documentElement.style.setProperty('--cm-hdr', (h.getBoundingClientRect().height + 6) + 'px'); };
+  set(); window.addEventListener('resize', set); window.addEventListener('load', set); setTimeout(set, 600);
+  /* keep the tapped area button fully visible in the swipe row */
+  document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('.cm-tab'); if (t && t.scrollIntoView) setTimeout(() => t.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }), 30); });
 })();

@@ -101,12 +101,19 @@
     if (r.ok) { hydrate(r.data, false); document.dispatchEvent(new CustomEvent('caremate-synced')); }
   }
 
-  /* "Delete all my data": removes it from the database too */
+  /* "Delete all my data": removes it from the database too. Returns true when the server confirmed (or there is no account). */
   async function wipeRemote() {
-    const t = token(); if (!t) return;
+    const t = token(); if (!t) return true;
     del(TOKEN);                                                              // stop write-through while wiping
-    try { await fetch(BASE + '/api/data', { method: 'DELETE', headers: { Authorization: 'Bearer ' + t }, keepalive: true }); } catch (e) {}
+    let ok = false;
+    try {
+      const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 20000);   // free hosting can take a while to wake up
+      const r = await fetch(BASE + '/api/data', { method: 'DELETE', headers: { Authorization: 'Bearer ' + t }, signal: ctl.signal });
+      clearTimeout(to); ok = r.ok;
+    } catch (e) {}
+    if (!ok) { set(TOKEN, t); return false; }                                // not deleted on the server: keep the session so they can retry
     fetch(BASE + '/api/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + t }, keepalive: true }).catch(() => {});
+    return true;
   }
 
   window.CareMateAPI = { auth, refresh, wipeRemote, request, loggedIn: () => !!token(), base: BASE };

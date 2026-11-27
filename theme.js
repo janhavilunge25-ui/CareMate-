@@ -62,3 +62,37 @@
     } catch (e) {}
   };
 })();
+
+
+/* ---- Reminder notifications: works on phones (Android needs the service worker) and desktop ---- */
+(function () {
+  window.cmNotifyOn = function () {
+    var S = window.cmSettings || {};
+    return S.notify !== false && 'Notification' in window && Notification.permission === 'granted';
+  };
+  window.cmNotify = function (body) {
+    if (!window.cmNotifyOn()) return;
+    var opts = { body: body, icon: '4th.jpg', badge: '4th.jpg', tag: 'caremate-' + body, renotify: true, vibrate: [200, 100, 200] };
+    var fallback = function () { try { new Notification('CareMate', opts); } catch (e) {} };
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
+        navigator.serviceWorker.getRegistration().then(function (r) { r ? r.showNotification('CareMate', opts) : fallback(); }).catch(fallback);
+      } else fallback();
+    } catch (e) { fallback(); }
+  };
+  /* ask for permission, then say whether reminders can pop up. cb(true/false, message) */
+  window.cmEnableNotify = function (cb) {
+    var S = window.cmSettings || {};
+    if (!('Notification' in window)) { cb(false, 'This browser cannot show notifications. Reminders will show inside the app and play a sound.'); return; }
+    var fired = false;
+    var done = function (p) {
+      if (fired) return; fired = true;
+      if (p === 'granted') { S.notify = true; window.cmSave(); cb(true, 'Reminder notifications are on.'); window.cmNotify('Reminders are on. This is a test.'); }
+      else { cb(false, 'Notifications are blocked. Allow them for this site in your browser settings, then try again.'); }
+    };
+    if (Notification.permission === 'granted') return done('granted');
+    if (Notification.permission === 'denied') return done('denied');
+    var r = Notification.requestPermission(function (p) { done(p); });
+    if (r && r.then) r.then(done);
+  };
+})();

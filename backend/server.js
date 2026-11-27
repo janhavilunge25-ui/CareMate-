@@ -173,6 +173,32 @@ async function chat(uid, body) {
   return { reply, followUps, urgent: EMERGENCY.test(reply) && /112|108/.test(reply) };
 }
 
+
+/* ---------- password reset (6-digit code sent by email) ----------
+   Email is sent through EmailJS (the same account the Contact form uses). In Render > Environment set:
+     EMAILJS_RESET_TEMPLATE_ID (required). Optional: EMAILJS_SERVICE_ID, EMAILJS_PUBLIC_KEY (default to the Contact form's), EMAILJS_PRIVATE_KEY.
+   In EmailJS > Account > Security tick "Allow EmailJS API for non-browser applications".
+   The template can use {{to_email}}, {{to_name}}, {{code}} and {{minutes}}. */
+const crypto = require('node:crypto');
+const resets = new Map();                                   // email -> { hash, exp, tries }
+const RESET_MIN = 15;
+const sha256 = x => crypto.createHash('sha256').update(x).digest('hex');
+async function sendResetEmail(user, code) {
+  const e = process.env, tpl = e.EMAILJS_RESET_TEMPLATE_ID;
+  if (!tpl) {
+    console.log('[CareMate] Email is not set up (EMAILJS_RESET_TEMPLATE_ID missing). Reset code for ' + user.email + ': ' + code);   // Render logs only
+    return false;
+  }
+  const payload = { service_id: e.EMAILJS_SERVICE_ID || 'service_4h46t3y', template_id: tpl, user_id: e.EMAILJS_PUBLIC_KEY || 'MG6nTVi7clYTBAYfh',
+    template_params: { to_email: user.email, to_name: user.name, code, minutes: RESET_MIN } };
+  if (e.EMAILJS_PRIVATE_KEY) payload.accessToken = e.EMAILJS_PRIVATE_KEY;
+  const r = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+    method: 'POST', headers: { 'content-type': 'application/json' }, signal: AbortSignal.timeout(15000), body: JSON.stringify(payload)
+  });
+  if (!r.ok) { console.log('[CareMate] EmailJS refused the reset email: ' + r.status + ' ' + (await r.text().catch(() => ''))); throw new Error('EmailJS ' + r.status); }
+  return true;
+}
+
 /* ---------- routes ---------- */
 async function api(req, res, url) {
   const route = req.method + ' ' + url.pathname.replace(/\/+$/, '');
@@ -202,6 +228,34 @@ async function api(req, res, url) {
     return send(res, 200, { token: store.createSession(u.id, SESSION_DAYS), user: publicUser(u), data: snapshot(u.id) });
   }
 
+  if (route === 'POST /api/forgot') {
+    throttle(ip);
+    const b = await readJson(req), email = String(b.email || '').trim().toLowerCase();
+    if (!emailOk(email)) bad('Enter a valid email address.');
+    const u = store.findByEmail(email);
+    if (u) {                                                          // same answer whether or not the account exists
+      const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+      resets.set(email, { hash: sha256(email + ':' + code), exp: Date.now() + RESET_MIN * 60e3, tries: 0 });
+      try { if (!(await sendResetEmail(u, code)) && process.env.DEV_RESET_LOG !== '1') bad('Password reset email is not set up on this server yet. Please contact the CareMate team.', 503); }
+      catch (e) { if (e instanceof HttpError) throw e; resets.delete(email); bad('We could not send the email right now. Please try again in a few minutes.', 502); }
+    }
+    return send(res, 200, { ok: true });
+  }
+
+  if (route === 'POST /api/reset') {
+    throttle(ip);
+    const b = await readJson(req), email = String(b.email || '').trim().toLowerCase(), code = String(b.code || '').trim(), pw = String(b.password || '');
+    if (pw.length < 6 || pw.length > 128) bad('Password must be at least 6 characters.');
+    const r = resets.get(email), u = r && store.findByEmail(email);
+    if (!r || !u || r.exp < Date.now()) { resets.delete(email); bad('That code has expired. Please ask for a new one.', 400); }
+    if (++r.tries > 5) { resets.delete(email); bad('Too many wrong codes. Please ask for a new one.', 429); }
+    const a = Buffer.from(sha256(email + ':' + code)), c = Buffer.from(r.hash);
+    if (a.length !== c.length || !crypto.timingSafeEqual(a, c)) bad('That code is not correct.', 400);
+    resets.delete(email);
+    store.setPassword(u.id, pw);
+    return send(res, 200, { ok: true });
+  }
+
   if (route === 'POST /api/logout') { store.endSession(token); return send(res, 200, { ok: true }); }
 
   /* everything below needs a valid token */
@@ -221,6 +275,17 @@ async function api(req, res, url) {
         profile: store.getProfile(target.id), plan: store.getPlan(target.id), recentLog: Object.fromEntries(days.map(k => [k, log[k]])) });
     }
     bad('Not found.', 404);
+  }
+
+  if (route === 'POST /api/change-password') {
+    throttle(ip);
+    const b = await readJson(req), cur = String(b.current || ''), pw = String(b.password || '');
+    const full = store.findByEmail(user.email);
+    if (!full || !store.verifyPassword(cur, full.salt, full.password_hash)) bad('Your current password is not correct.', 401);
+    if (pw.length < 6 || pw.length > 128) bad('New password must be at least 6 characters.');
+    if (pw === cur) bad('Please choose a password different from the current one.');
+    store.setPassword(uid, pw, token);
+    return send(res, 200, { ok: true });
   }
 
   if (route === 'GET /api/me') return send(res, 200, { user: publicUser(user) });
@@ -340,6 +405,22 @@ const server = http.createServer(async (req, res) => {
     console.error(e); send(res, 500, { error: 'Something went wrong on our side. Please try again.' });
   }
 });
+
+/* ---------- owner recovery: reset the admin password from Render (no email needed) ----------
+   Render > Environment: add ADMIN_RESET_PASSWORD = a new password (6+ characters), redeploy, log in,
+   then DELETE the variable again. Works for the first ADMIN_EMAIL (or ADMIN_RESET_EMAIL if you set it). */
+(function adminRecovery() {
+  const pw = process.env.ADMIN_RESET_PASSWORD;
+  if (!pw) return;
+  const email = String(process.env.ADMIN_RESET_EMAIL || ADMIN_EMAILS[0] || '').trim().toLowerCase();
+  if (!emailOk(email) || !ADMIN_EMAILS.includes(email)) { console.log('[CareMate] ADMIN_RESET_PASSWORD ignored: the email must be listed in ADMIN_EMAIL.'); return; }
+  if (pw.length < 6 || pw.length > 128) { console.log('[CareMate] ADMIN_RESET_PASSWORD ignored: use 6 to 128 characters.'); return; }
+  try {
+    const u = store.findByEmail(email);
+    if (u) { store.setPassword(u.id, pw); console.log('[CareMate] Admin password reset for ' + email + '. Now delete ADMIN_RESET_PASSWORD in Render.'); }
+    else { store.createUser('Admin', email, pw); console.log('[CareMate] Admin account created for ' + email + '. Now delete ADMIN_RESET_PASSWORD in Render.'); }
+  } catch (e) { console.log('[CareMate] Admin reset failed: ' + e.message); }
+})();
 
 if (require.main === module) server.listen(PORT, () => console.log(`CareMate running at http://localhost:${PORT}`));
 module.exports = server;

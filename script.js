@@ -163,7 +163,7 @@ coverBox.addEventListener('click', (e) => {
   /* "Forgot password?" has no server behind it yet, so say so clearly */
   document.querySelectorAll('.remember-forgot a[href="#"]').forEach(a => a.addEventListener('click', e => {
     e.preventDefault();
-    toast('Password reset is not available yet. Please contact the CareMate team.');
+    if (window.CareMatePassword) CareMatePassword.openForgot(); else toast('Please try again in a moment.');
   }));
 
   /* modal behaviour: click outside / Esc closes, page stops scrolling, first field gets focus */
@@ -1604,7 +1604,12 @@ const CareMatePlan = (function () {
             <input type="time" id="cmRemTime" value="09:00" aria-label="Reminder time" required>
             <button class="cm-btn small" type="submit">Add</button>
           </form>
-          <p class="cm-note">Reminders alert you while this page is open. Allow notifications when asked.</p>
+          <div class="cm-rtools">
+            <button class="cm-btn small ghost" type="button" id="cmRemNotify"><i class="fa-solid fa-bell"></i> <span id="cmRemNotifyTxt">Turn on notifications</span></button>
+            <button class="cm-btn small ghost" type="button" id="cmRemTest"><i class="fa-solid fa-volume-high"></i> Test alarm</button>
+            <button class="cm-btn small ghost" type="button" id="cmRemIcs"><i class="fa-solid fa-calendar-plus"></i> Add to phone calendar</button>
+          </div>
+          <p class="cm-note" id="cmRemStatus">Reminders ring and notify while CareMate is open. To be alerted even when the app is closed, tap <b>Add to phone calendar</b>: your phone will then ring at these times every day.</p>
           <p class="cm-note cm-motive">Small reminders build big habits.</p>`
       };
     },
@@ -1673,8 +1678,14 @@ const CareMatePlan = (function () {
   if (!Array.isArray(reminders)) reminders = DEFAULT_REMINDERS.map(r => ({ ...r }));
   const saveRem = () => { try { localStorage.setItem('careMateReminders', JSON.stringify(reminders)); } catch (e) {} };
 
-  function askNotify() {
-    if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+  function askNotify(cb) {
+    if (window.cmEnableNotify) window.cmEnableNotify(function (ok, msg) { paintNotify(); if (msg) say(msg); if (cb) cb(ok); });
+  }
+  function paintNotify() {
+    const t = $('cmRemNotifyTxt'); if (!t) return;
+    const on = window.cmNotifyOn && window.cmNotifyOn();
+    t.textContent = on ? 'Notifications on' : (('Notification' in window && Notification.permission === 'denied') ? 'Notifications blocked' : 'Turn on notifications');
+    const b = $('cmRemNotify'); if (b) b.classList.toggle('on', !!on);
   }
 
   function drawReminders() {
@@ -1691,40 +1702,79 @@ const CareMatePlan = (function () {
     box.querySelectorAll('[data-f]').forEach(inp => inp.addEventListener('change', () => {
       const r = reminders[inp.dataset.i], f = inp.dataset.f;
       r[f] = f === 'on' ? inp.checked : (inp.value || r[f]);
-      if (f === 'on' && inp.checked) askNotify();
       saveRem(); drawReminders();
+      if (f === 'on' && inp.checked && !(window.cmNotifyOn && window.cmNotifyOn())) askNotify();
     }));
     box.querySelectorAll('.cm-del').forEach(btn => btn.addEventListener('click', () => {
       reminders.splice(btn.dataset.i, 1); saveRem(); drawReminders();
     }));
   }
 
+  function icsEscape(t) { return String(t).replace(/[\\;,]/g, m => '\\' + m).replace(/\n/g, '\\n'); }
+  function downloadIcs() {
+    const act = reminders.filter(r => r.on);
+    if (!act.length) { say('Turn on at least one reminder first'); return; }
+    const d = new Date(), ymd = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//CareMate//Reminders//EN', 'CALSCALE:GREGORIAN'];
+    act.forEach((r, i) => {
+      const hm = r.time.replace(':', '') + '00';
+      lines.push('BEGIN:VEVENT', 'UID:caremate-' + i + '-' + r.time.replace(':', '') + '@caremate', 'DTSTAMP:' + ymd + 'T000000',
+        'DTSTART:' + ymd + 'T' + hm, 'DURATION:PT10M', 'RRULE:FREQ=DAILY', 'SUMMARY:CareMate: ' + icsEscape(r.label),
+        'BEGIN:VALARM', 'ACTION:AUDIO', 'TRIGGER:PT0S', 'END:VALARM', 'END:VEVENT');
+    });
+    lines.push('END:VCALENDAR');
+    const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar' }), a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'caremate-reminders.ics'; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    say('Open the downloaded file to add the daily alarms to your calendar');
+  }
   function bindReminders() {
-    drawReminders();
+    drawReminders(); paintNotify();
+    const nb = $('cmRemNotify'); if (nb) nb.addEventListener('click', () => {
+      if (window.cmNotifyOn && window.cmNotifyOn()) { window.cmSettings.notify = false; window.cmSave(); paintNotify(); say('Notifications off. Reminders still show in the app.'); }
+      else askNotify();
+    });
+    const tb = $('cmRemTest'); if (tb) tb.addEventListener('click', () => ring({ label: 'Test reminder' }, true));
+    const ib = $('cmRemIcs'); if (ib) ib.addEventListener('click', downloadIcs);
     const form = $('cmRemAdd'); if (!form) return;
     form.addEventListener('submit', e => {
       e.preventDefault();
       const label = $('cmRemLabel').value.trim(), time = $('cmRemTime').value;
       if (!label || !time) return;
       reminders.push({ label, time, on: true });
-      $('cmRemLabel').value = ''; askNotify(); saveRem(); drawReminders();
+      $('cmRemLabel').value = ''; saveRem(); drawReminders(); say('Reminder added for ' + time);
+      if (!(window.cmNotifyOn && window.cmNotifyOn())) askNotify();
     });
   }
 
-  let lastFired = '';
-  setInterval(() => {                       // fires alarms while the page is open
-    const d = new Date();
-    const hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-    if (hm === lastFired) return;
-    const due = reminders.filter(r => r.on && r.time === hm);
-    if (!due.length) return;
-    lastFired = hm;
-    due.forEach(r => {
-      say('Reminder: ' + r.label);
-      if ('Notification' in window && Notification.permission === 'granted') new Notification('CareMate', { body: r.label });
-      if (window.cmPlayTone) window.cmPlayTone();
+  /* one place that rings a reminder: message, phone notification, sound, vibration */
+  function ring(r, force) {
+    if (!force && window.cmSettings && window.cmSettings.notify === false) return;      // Settings > Reminder notifications is OFF
+    say('Reminder: ' + r.label);
+    if (window.cmNotify) window.cmNotify(r.label);
+    if (window.cmPlayTone) window.cmPlayTone();
+    try { if (navigator.vibrate) navigator.vibrate([300, 150, 300]); } catch (e) {}
+  }
+  const dayKey = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+  const firedKey = 'careMateFiredToday';
+  const readFired = () => { try { const f = JSON.parse(sessionStorage.getItem(firedKey) || '{}'); return f.d === dayKey() ? f : { d: dayKey(), k: [] }; } catch (e) { return { d: dayKey(), k: [] }; } };
+  /* checks every reminder; also catches ones that came due while the phone was asleep (up to 10 minutes late) */
+  function checkReminders() {
+    const now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes(), f = readFired();
+    reminders.forEach(r => {
+      if (!r.on || !/^\d{1,2}:\d{2}$/.test(r.time)) return;
+      const [h, m] = r.time.split(':').map(Number), diff = nowMin - (h * 60 + m), id = r.time + '|' + r.label;
+      if (diff < 0 || diff > 10 || f.k.includes(id)) return;
+      f.k.push(id); ring(r);
     });
-  }, 15000);
+    try { sessionStorage.setItem(firedKey, JSON.stringify(f)); } catch (e) {}
+  }
+  setInterval(checkReminders, 10000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkReminders(); });
+  window.addEventListener('focus', checkReminders);
+  document.addEventListener('caremate-synced', () => {            // reminders changed on another device
+    try { const r = JSON.parse(localStorage.getItem('careMateReminders') || 'null'); if (Array.isArray(r)) { reminders = r; drawReminders(); } } catch (e) {}
+  });
 
   /* ---------- page states ---------- */
   function showTab(id) {

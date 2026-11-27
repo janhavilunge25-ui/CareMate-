@@ -163,3 +163,23 @@ button, [role="button"], a { touch-action: manipulation; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }
+
+/* =====================================================================
+   Your plan: the section buttons (Diet / Yoga / Meditation ...) stay in view while scrolling,
+   and are bigger and easier to read and tap. One swipeable row, nothing cut off.
+   ===================================================================== */
+@media (max-width: 900px) {
+  .cm-nav { position: sticky !important; top: var(--cm-hdr, 72px); z-index: 60; padding: 8px !important; margin: 0 -2px;
+    background: var(--card, #fff); border-radius: 18px; box-shadow: 0 8px 22px rgba(3, 47, 48, .16); overflow: visible; }
+  .cm-card .cm-tabs { display: flex !important; flex-wrap: nowrap; grid-template-columns: none; overflow-x: auto !important; overflow-y: hidden;
+    gap: 8px; padding: 2px 2px 4px; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .cm-card .cm-tabs::-webkit-scrollbar { display: none; }
+  .cm-card .cm-tab { flex: 0 0 auto !important; width: auto !important; min-width: max-content; min-height: 56px !important; padding: 8px 16px 8px 10px !important;
+    gap: 10px; white-space: nowrap !important; border: 1.5px solid var(--cm-line, #d5e6e6) !important; border-radius: 16px !important; scroll-snap-align: center; }
+  .cm-card .cm-tab:last-child:nth-child(odd) { grid-column: auto; }
+  .cm-card .cm-tab .cm-tico { width: 38px !important; height: 38px !important; font-size: 16px; }
+  .cm-card .cm-tab .cm-tlabel { font-size: 15px !important; font-weight: 600; line-height: 1.2; white-space: nowrap; flex: none; }
+  .cm-card .cm-tab .cm-tchev { display: none !important; }
+}
+.cm-rtools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.cm-rtools .cm-btn.on { background: var(--ac, #0a7075); color: #fff; }

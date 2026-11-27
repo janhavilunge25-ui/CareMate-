@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script src="cleanup.js"></script>
+<script src="guard.js"></script>
 <title>CareMate | Your Health Profile</title>
 <meta name="description" content="Tell CareMate a few details to get your personalised diet, yoga and wellness plan.">
 <meta name="robots" content="noindex">
@@ -10,7 +12,7 @@
 <link rel="icon" href="logo-small.png">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a7075">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="4th.jpg">
 
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="extras.css">
@@ -85,7 +87,7 @@
             </div>
         </div>
 
-        <form id="profileForm">
+        <form id="profileForm" autocomplete="off">
             <div class="pf-group"><span><i class="fa-solid fa-user"></i></span>About you</div>
             <div class="form-grid">
                 <div class="input-box">
@@ -358,10 +360,12 @@
 </footer>
 
 <script src="api.js" defer></script>
+<script src="password.js" defer></script>
 <script src="diet-extras.js" defer></script>
 <script src="progress.js" defer></script>
 <script src="script.js" defer></script>
 <script src="extras.js" defer></script>
 <script src="chatbot.js" defer></script>
+<script>if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });</script>
 </body>
 </html>

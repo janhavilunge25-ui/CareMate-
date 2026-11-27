@@ -35,6 +35,9 @@ const q = {
   delSession:  db.prepare('DELETE FROM sessions WHERE token_hash = ?'),
   purge:       db.prepare('DELETE FROM sessions WHERE expires_at < ?'),
   delUser:     db.prepare('DELETE FROM users WHERE id = ?'),
+  setPw:       db.prepare('UPDATE users SET password_hash = ?, salt = ? WHERE id = ?'),
+  delUserSess: db.prepare('DELETE FROM sessions WHERE user_id = ?'),
+  delOtherSess:db.prepare('DELETE FROM sessions WHERE user_id = ? AND token_hash <> ?'),
 
   getProfile:  db.prepare('SELECT data FROM profiles WHERE user_id = ?'),
   setProfile:  db.prepare(`INSERT INTO profiles (user_id, data) VALUES (?, ?)
@@ -87,6 +90,12 @@ module.exports = {
   },
   endSession: token => { if (token) q.delSession.run(sha(token)); },
   deleteUser: id => q.delUser.run(id),
+  /* change / reset password: new scrypt hash, and other devices are signed out */
+  setPassword(id, password, keepToken) {
+    const { salt, hash } = hashPassword(password);
+    q.setPw.run(hash, salt, id);
+    if (keepToken) q.delOtherSess.run(id, sha(keepToken)); else q.delUserSess.run(id);
+  },
 
   getProfile: id => { const r = q.getProfile.get(id); return r ? parse(r.data, null) : null; },
   setProfile: (id, obj) => q.setProfile.run(id, JSON.stringify(obj)),
