@@ -414,7 +414,11 @@ const server = http.createServer(async (req, res) => {
 (function adminRecovery() {
   const pw = process.env.ADMIN_RESET_PASSWORD;
   if (!pw) return;
-  const email = String(process.env.ADMIN_RESET_EMAIL || ADMIN_EMAIL[0] || '').trim().toLowerCase();
+  const email = String(
+    process.env.ADMIN_RESET_EMAIL ||
+    process.env.ADMIN_EMAIL ||
+    (ADMIN_EMAILS[0] && ADMIN_EMAILS[0]) ||
+    '').trim().toLowerCase();
   if (!emailOk(email) || !ADMIN_EMAIL.includes(email)) { console.log('[CareMate] ADMIN_RESET_PASSWORD ignored: the email must be listed in ADMIN_EMAIL.'); return; }
   if (pw.length < 6 || pw.length > 128) { console.log('[CareMate] ADMIN_RESET_PASSWORD ignored: use 6 to 128 characters.'); return; }
   try {
